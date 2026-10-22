@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "@/shared/lib/utils";
 
-export function isActivePath(pathname: string, href: string, exact = href === "/" || href === "/dashboard") {
+export function isActivePath(pathname: string, href: string, exact = href === "/" || href === "/dashboard" || href === "/admin") {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 

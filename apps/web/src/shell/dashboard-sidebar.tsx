@@ -7,7 +7,7 @@ import { useAuth, useLogout } from "@/domains/auth/hooks";
 import { Skeleton } from "@/shared/components/ui/feedback";
 import { cn } from "@/shared/lib/utils";
 import { NavLink } from "./nav-link";
-import { ownerNav, renterNav, type DashboardNavItem } from "./navigation";
+import { adminNav, ownerNav, renterNav, type DashboardNavItem } from "./navigation";
 
 const link = {
   base: "flex items-center gap-3 rounded-md px-3.5 py-3 font-heading text-base transition-colors [&_svg]:size-[22px]",
@@ -35,7 +35,7 @@ function NavGroup({ title, items, inSheet }: { title: string; items: DashboardNa
 }
 
 /** Account block + role-aware navigation of the 280px dark sidebar (37_Dash Board). */
-export function DashboardSidebarNav({ inSheet = false }: { inSheet?: boolean }) {
+export function DashboardSidebarNav({ inSheet = false, area = "dashboard" }: { inSheet?: boolean; area?: "dashboard" | "admin" }) {
   const { user, isOwner, isLoading } = useAuth();
   const logout = useLogout();
   const router = useRouter();
@@ -53,8 +53,18 @@ export function DashboardSidebarNav({ inSheet = false }: { inSheet?: boolean }) 
       </div>
       <hr className="mb-6 border-white/5" />
       <nav aria-label="Dashboard" className="flex flex-col gap-6 px-4">
-        <NavGroup title="Menu" items={renterNav} inSheet={inSheet} />
-        {isOwner && <NavGroup title="Hosting" items={ownerNav} inSheet={inSheet} />}
+        {area === "admin" ? (
+          <>
+            <NavGroup title="Admin" items={adminNav} inSheet={inSheet} />
+            <NavGroup title="Back to" items={[{ label: "My dashboard", href: "/dashboard", icon: renterNav[0]!.icon }]} inSheet={inSheet} />
+          </>
+        ) : (
+          <>
+            <NavGroup title="Menu" items={renterNav} inSheet={inSheet} />
+            {isOwner && <NavGroup title="Hosting" items={ownerNav} inSheet={inSheet} />}
+            {user?.roles.includes("admin") && <NavGroup title="Platform" items={[{ ...adminNav[0]!, label: "Admin area" }]} inSheet={inSheet} />}
+          </>
+        )}
       </nav>
       <div className="mt-auto px-4 pt-6">
         <button

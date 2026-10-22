@@ -56,6 +56,11 @@ export function AccountMenu({ tone = "dark" }: { tone?: "dark" | "light" }) {
           <DropdownMenu.Item asChild className={itemClass}>
             <Link href="/dashboard/profile">Profile</Link>
           </DropdownMenu.Item>
+          {user.roles.includes("admin") && (
+            <DropdownMenu.Item asChild className={itemClass}>
+              <Link href="/admin">Admin area</Link>
+            </DropdownMenu.Item>
+          )}
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item
             className={itemClass}

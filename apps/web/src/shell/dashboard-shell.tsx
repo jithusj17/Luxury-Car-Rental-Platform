@@ -9,14 +9,16 @@ import { Logo } from "./logo";
 import { siteConfig } from "./navigation";
 import { MainNav } from "./site-header";
 
-function SidebarContent({ inSheet = false }: { inSheet?: boolean }) {
+type Area = "dashboard" | "admin";
+
+function SidebarContent({ inSheet = false, area }: { inSheet?: boolean; area: Area }) {
   return (
     <>
       <div className="flex h-[68px] shrink-0 items-center px-8">
         <Logo tone="light" />
       </div>
       <hr className="border-white/5" />
-      <DashboardSidebarNav inSheet={inSheet} />
+      <DashboardSidebarNav inSheet={inSheet} area={area} />
       <p className="px-8 pt-6 pb-8 text-body">
         Copyright © <CurrentYear /> {siteConfig.name}
       </p>
@@ -25,11 +27,11 @@ function SidebarContent({ inSheet = false }: { inSheet?: boolean }) {
 }
 
 /** Dashboard frame from 37–43: 280px dark sidebar, site navigation in the top bar, content area. */
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({ children, area = "dashboard" }: { children: React.ReactNode; area?: Area }) {
   return (
     <div className="flex min-h-dvh bg-white">
       <aside className="sticky top-0 hidden h-dvh w-[280px] shrink-0 flex-col overflow-y-auto bg-heading lg:flex">
-        <SidebarContent />
+        <SidebarContent area={area} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -42,7 +44,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </DialogTrigger>
             <SheetContent className="bg-heading" aria-describedby={undefined}>
               <DialogTitle className="sr-only">Dashboard menu</DialogTitle>
-              <SidebarContent inSheet />
+              <SidebarContent inSheet area={area} />
             </SheetContent>
           </Dialog>
           <MainNav className="hidden xl:block" />

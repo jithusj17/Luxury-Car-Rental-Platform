@@ -5,7 +5,7 @@ import { useState } from "react";
 import { isApiError } from "@/shared/api/api-error";
 import { ToastProvider } from "@/shared/components/ui/toast";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/checkout"];
+const PROTECTED_PREFIXES = ["/dashboard", "/checkout", "/admin"];
 
 /** A session that expired mid-visit sends the user to sign in, then back where they were. */
 function handleUnauthenticated(error: unknown) {

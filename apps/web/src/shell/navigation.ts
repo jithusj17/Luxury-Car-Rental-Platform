@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { CalendarCheck, CalendarRange, Car, ClipboardList, LayoutDashboard, UserRound, Wallet } from "lucide-react";
+import { CalendarCheck, CalendarRange, Car, ClipboardList, CreditCard, LayoutDashboard, ScrollText, ShieldCheck, UserRound, Users, Wallet } from "lucide-react";
 
 export type NavItem = { label: string; href: string };
 export type DashboardNavItem = NavItem & { icon: LucideIcon };
@@ -46,6 +46,16 @@ export const renterNav: DashboardNavItem[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "My bookings", href: "/dashboard/bookings", icon: CalendarCheck },
   { label: "Profile", href: "/dashboard/profile", icon: UserRound },
+];
+
+/** Admin area navigation (admins only). */
+export const adminNav: DashboardNavItem[] = [
+  { label: "Overview", href: "/admin", icon: ShieldCheck },
+  { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Vehicles", href: "/admin/vehicles", icon: Car },
+  { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
+  { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Audit log", href: "/admin/audit-log", icon: ScrollText },
 ];
 
 /** Shown only to accounts with the owner role. */
