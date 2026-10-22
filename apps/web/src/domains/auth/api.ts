@@ -29,5 +29,7 @@ export const authApi = {
   resetPassword: (body: ResetPasswordBody) => apiRequest<void>("/v1/auth/password/reset", { method: "POST", body }),
   changePassword: (body: ChangePasswordBody) => apiRequest<void>("/v1/me/password", { method: "POST", body }),
   updateProfile: async (body: UpdateProfileBody) => (await apiRequest<UserResponse>("/v1/me", { method: "PATCH", body })).user,
+  verifyEmail: async (token: string) => (await apiRequest<UserResponse>("/v1/auth/email/verify", { method: "POST", body: { token } })).user,
+  resendVerification: () => apiRequest<void>("/v1/me/email/verification", { method: "POST", body: {} }),
   becomeOwner: async () => (await apiRequest<UserResponse>("/v1/me/become-owner", { method: "POST", body: {} })).user,
 };

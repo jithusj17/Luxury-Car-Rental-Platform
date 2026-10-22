@@ -51,6 +51,20 @@ export function useBecomeOwner() {
   return useMutation({ mutationFn: authApi.becomeOwner, onSuccess: (user) => queryClient.setQueryData(authKeys.me, user) });
 }
 
+/** Confirms the emailed token; the returned user may now include roles granted on verification. */
+export function useVerifyEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) => authApi.verifyEmail(token),
+    // The link may be opened while signed out or as someone else: only refresh our own record.
+    onSuccess: (user) => queryClient.setQueryData(authKeys.me, (current: CurrentUser | null | undefined) => (current?.id === user.id ? user : current)),
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({ mutationFn: () => authApi.resendVerification() });
+}
+
 /** Only allows same-site relative paths, so `?next=` can't redirect off-site. */
 export function safeNextPath(next: string | null | undefined, fallback = "/dashboard"): string {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : fallback;

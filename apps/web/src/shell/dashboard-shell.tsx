@@ -1,5 +1,6 @@
 import { Menu, Plus } from "lucide-react";
 import Link from "next/link";
+import { VerifyEmailBanner } from "@/domains/auth/components/email-verification";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogTitle, DialogTrigger, SheetContent } from "@/shared/components/ui/dialog";
 import { AccountMenu } from "./account-menu";
@@ -60,7 +61,10 @@ export function DashboardShell({ children, area = "dashboard" }: { children: Rea
             </Button>
           </div>
         </header>
-        <main className="flex-1 px-4 py-8 sm:px-8 xl:px-[30px]">{children}</main>
+        <main className="flex-1 px-4 py-8 sm:px-8 xl:px-[30px]">
+          <VerifyEmailBanner />
+          {children}
+        </main>
       </div>
     </div>
   );
