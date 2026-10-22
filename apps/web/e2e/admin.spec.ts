@@ -32,8 +32,9 @@ test("admin sees the overview and can suspend and reinstate a user", async ({ pa
   await expect(row.getByText("Suspended")).toBeVisible();
 
   await page.goto("/admin/audit-log");
-  await expect(page.getByText("Suspended user")).toBeVisible();
-  await expect(page.getByText("“Payment dispute”")).toBeVisible();
+  // .first(): a retried run leaves an earlier entry behind.
+  await expect(page.getByText("Suspended user").first()).toBeVisible();
+  await expect(page.getByText("“Payment dispute”").first()).toBeVisible();
 
   await page.goto("/admin/users");
   await page.getByLabel("Search name or email").fill("renter@");
@@ -50,5 +51,5 @@ test("admin unlists a car and it disappears from the catalog", async ({ page }) 
   await expect(row.getByText("Unlisted")).toBeVisible();
 
   await page.goto("/cars?q=Model%20Y");
-  await expect(page.getByText("No cars match your search")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No cars match your search" })).toBeVisible();
 });
