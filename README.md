@@ -1,47 +1,145 @@
-# Car Rental
+# Luxury Car Rental Platform
 
-Peer-to-peer car rental: renters search and book cars; hosts list vehicles, manage availability, and track earnings. The UI follows the AutoDeal Figma template (see `CLAUDE.md` for the design source and engineering rules).
+A full-stack car rental platform: renters search cars, book dates and pay; hosts list vehicles, manage availability and track earnings. Bookings can never overlap — the database enforces it.
 
-| Package | What it is |
+- **Frontend:** Next.js 16 + React 19 + Tailwind CSS 4 → [`apps/web`](apps/web)
+- **Backend API:** Node.js 24 + Fastify 5 + PostgreSQL 17 (Drizzle ORM) → [`apps/api`](apps/api)
+- **Shared request/response schemas:** Zod → [`packages/contracts`](packages/contracts)
+
+> **Where is the app?** This repository is a pnpm monorepo. The **repository root is the project root**: install and run everything from the top-level folder (the one containing `package.json` and `pnpm-workspace.yaml`). The frontend and backend are in `apps/web` and `apps/api`.
+
+## Repository structure
+
+```text
+.
+├── apps/
+│   ├── web/                     # Frontend (Next.js) — http://localhost:3000
+│   │   ├── src/
+│   │   │   ├── app/             # Routes: (public), (auth), dashboard
+│   │   │   ├── domains/         # Features: auth, vehicles, bookings, payments, owner
+│   │   │   ├── shared/          # Design system (components/ui), API client, hooks, utils
+│   │   │   ├── shell/           # Header, footer, dashboard shell, navigation, providers
+│   │   │   └── proxy.ts         # Redirects signed-out visitors away from /dashboard and /checkout
+│   │   ├── e2e/                 # Playwright end-to-end tests
+│   │   ├── next.config.ts
+│   │   └── .env.example
+│   └── api/                     # Backend API (Fastify) — http://localhost:4000
+│       ├── src/
+│       │   ├── modules/         # identity, vehicles, bookings, payments, notifications
+│       │   ├── shared/          # config, db, http, outbox, jobs, logging, errors
+│       │   ├── scripts/         # seed, reset-db, load-test
+│       │   ├── app.ts           # Fastify app setup
+│       │   ├── container.ts     # Wires modules together
+│       │   └── main.ts          # Server entry point
+│       ├── migrations/          # SQL migrations (Drizzle)
+│       ├── test/                # Integration and concurrency tests
+│       └── .env.example
+├── packages/
+│   └── contracts/               # Zod schemas shared by web and api
+├── docs/                        # Architecture, operations, known gaps
+├── docker-compose.yml           # PostgreSQL and Redis for local development
+├── package.json                 # Workspace scripts (run from the repository root)
+├── pnpm-workspace.yaml
+└── CLAUDE.md                    # Engineering guidelines for the project
+```
+
+### Where to find things
+
+| Looking for… | Path |
 |---|---|
-| `apps/web` | Next.js 16 (App Router, Cache Components), React 19, Tailwind 4, Radix, TanStack Query, React Hook Form |
-| `apps/api` | Fastify 5 modular monolith (identity, vehicles, bookings, payments, notifications), Drizzle ORM, PostgreSQL 17 |
-| `packages/contracts` | Zod request/response schemas shared by both apps (validation, OpenAPI, TypeScript types) |
+| Home page | `apps/web/src/app/(public)/page.tsx` |
+| Car search and car detail pages | `apps/web/src/app/(public)/cars/` |
+| Checkout | `apps/web/src/app/(public)/checkout/[bookingId]/page.tsx` |
+| Login / register pages | `apps/web/src/app/(auth)/` |
+| Renter and host dashboard pages | `apps/web/src/app/dashboard/` |
+| Reusable UI components | `apps/web/src/shared/components/ui/` |
+| Design tokens (colors, fonts, radii) | `apps/web/src/app/globals.css` |
+| API endpoints (routes) | `apps/api/src/modules/*/presentation/` |
+| Business rules | `apps/api/src/modules/*/domain/` and `apps/api/src/modules/*/application/` |
+| Database tables | `apps/api/src/modules/*/infrastructure/schema.ts` and `apps/api/migrations/` |
+| Double-booking protection | `apps/api/migrations/0001_booking_integrity.sql` |
+| API configuration options | `apps/api/src/shared/config/env.ts` and `apps/api/.env.example` |
 
-## Quick start
+## Getting started
 
-Requirements: Node 24+, pnpm 12, Docker.
+### Prerequisites
+
+- [Node.js](https://nodejs.org) **24 or newer**
+- [pnpm](https://pnpm.io) **12** (`corepack enable` installs the version pinned in `package.json`)
+- [Docker](https://www.docker.com) (runs PostgreSQL and Redis)
+
+### Install and run
+
+Run these from the **repository root**:
 
 ```bash
-pnpm install
-docker compose up -d                 # Postgres :5433, Redis :6380
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
-pnpm db:migrate
-pnpm db:seed                         # owner@example.com / renter@example.com, password1234
-pnpm dev                             # API :4000, web :3000
+git clone https://github.com/jithusj17/Luxury-Car-Rental-Platform.git
+cd Luxury-Car-Rental-Platform
+
+pnpm install                                   # installs web, api and contracts together
+docker compose up -d                           # PostgreSQL on :5433, Redis on :6380
+
+cp apps/api/.env.example apps/api/.env         # API settings
+cp apps/web/.env.example apps/web/.env.local   # web settings
+
+pnpm db:migrate                                # create the database tables
+pnpm db:seed                                   # demo accounts and 12 sample cars
+pnpm dev                                       # starts the API and the web app
 ```
 
-- App: http://localhost:3000 · API docs (OpenAPI UI): http://localhost:4000/docs
-- Password-reset and booking emails are written to the API log in development.
-- Payments use the built-in **mock provider**. Test cards: `4242424242424242` succeeds, `4000000000000002` is declined, `4000000000009995` has insufficient funds, `4000000000000259` succeeds without sending a webhook (exercises reconciliation).
+Then open:
 
-## Quality gates
+- **App:** http://localhost:3000
+- **API documentation (OpenAPI):** http://localhost:4000/docs
+
+**Demo accounts** (created by `pnpm db:seed`, password `password1234`):
+
+| Role | Email |
+|---|---|
+| Host (can list cars) | `owner@example.com` |
+| Renter | `renter@example.com` |
+
+Payments use a built-in **test payment provider** — no real money. Test cards:
+
+| Card number | Result |
+|---|---|
+| `4242424242424242` | Succeeds |
+| `4000000000000002` | Declined |
+| `4000000000009995` | Insufficient funds |
+| `4000000000000259` | Succeeds without sending a webhook (tests reconciliation) |
+
+In development, emails (booking confirmations, password-reset links) are written to the API log instead of being sent.
+
+### Running one app on its own
+
+From the repository root:
 
 ```bash
-pnpm typecheck      # all packages
-pnpm lint           # ESLint (web, incl. module-boundary rules) + tsc (api, contracts)
-pnpm test           # web unit/component tests + API unit/integration tests (needs docker compose)
-pnpm e2e            # production build + Playwright journeys (uses a disposable carrental_e2e database)
-pnpm load-test      # against an API on :4100 with RATE_LIMIT_ENABLED=false (see script header)
+pnpm --filter api dev      # backend only  (apps/api, port 4000)
+pnpm --filter web dev      # frontend only (apps/web, port 3000; needs the API running)
 ```
 
-On memory-constrained machines, cap Next.js build workers with `NEXT_BUILD_CPUS=4 pnpm build`.
+## Commands
 
-API tests run against real Postgres (a fresh `carrental_test` database per run), including the booking concurrency suite.
+All commands run from the repository root.
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Start the API and the web app in development mode |
+| `pnpm build` | Production build of the web app |
+| `pnpm typecheck` | Type-check all packages |
+| `pnpm lint` | Lint all packages |
+| `pnpm test` | Unit and integration tests (needs `docker compose up -d`) |
+| `pnpm e2e` | Build the web app and run the Playwright browser tests |
+| `pnpm db:migrate` | Apply database migrations |
+| `pnpm db:seed` | Load demo accounts and sample cars |
+| `pnpm load-test` | Load test against an API on port 4100 (see `apps/api/src/scripts/load-test.ts`) |
+
+On machines with little memory, limit the build workers: `NEXT_BUILD_CPUS=4 pnpm build`.
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md) — module boundaries, booking integrity, payments workflow, security model
-- [docs/operations.md](docs/operations.md) — configuration, deployment, health checks, metrics and alerts, runbooks
-- [docs/known-gaps.md](docs/known-gaps.md) — what is intentionally not built yet
+- [`docs/architecture.md`](docs/architecture.md) — modules, how double bookings are prevented, payments flow, security
+- [`docs/operations.md`](docs/operations.md) — configuration, deployment, health checks, metrics, alerts
+- [`docs/known-gaps.md`](docs/known-gaps.md) — what isn't built yet
+- [`apps/web/README.md`](apps/web/README.md) and [`apps/api/README.md`](apps/api/README.md) — app-specific notes
