@@ -1,6 +1,6 @@
 "use client";
 
-import type { CreateBlockBody, UpdateVehicleStatusBody, VehicleStatus } from "@car-rental/contracts";
+import type { CreateBlockBody, OwnerVehicle, UpdateVehicleStatusBody, VehicleStatus } from "@car-rental/contracts";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ownerApi, type VehicleInput, type VehiclePatchInput } from "./api";
 
@@ -55,6 +55,20 @@ export function useCalendarMutations() {
   return {
     createBlock: useMutation({ mutationFn: (body: CreateBlockBody) => ownerApi.createBlock(body), onSuccess: refresh }),
     deleteBlock: useMutation({ mutationFn: (id: string) => ownerApi.deleteBlock(id), onSuccess: refresh }),
+  };
+}
+
+/** Photo changes update the cached vehicle in place (they don't change its edit version). */
+export function usePhotoMutations(vehicleId: string) {
+  const queryClient = useQueryClient();
+  const onSuccess = (vehicle: OwnerVehicle) => {
+    queryClient.setQueryData(ownerKeys.vehicle(vehicle.id), vehicle);
+    void queryClient.invalidateQueries({ queryKey: ownerKeys.vehicles, refetchType: "none" });
+  };
+  return {
+    upload: useMutation({ mutationFn: (file: File) => ownerApi.uploadPhoto(vehicleId, file), onSuccess }),
+    remove: useMutation({ mutationFn: (url: string) => ownerApi.removePhoto(vehicleId, url), onSuccess }),
+    reorder: useMutation({ mutationFn: (urls: string[]) => ownerApi.reorderPhotos(vehicleId, urls), onSuccess }),
   };
 }
 

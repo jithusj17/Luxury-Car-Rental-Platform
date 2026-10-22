@@ -16,6 +16,7 @@ import { Input, Textarea } from "@/shared/components/ui/input";
 import { Select } from "@/shared/components/ui/select";
 import { useToast } from "@/shared/components/ui/toast";
 import { useSaveVehicle } from "../hooks";
+import { PhotoManager } from "./photo-manager";
 import {
   FEATURE_OPTIONS,
   SERVER_FIELD_MAP,
@@ -42,9 +43,14 @@ export function VehicleForm({ vehicle }: { vehicle?: OwnerVehicle }) {
     form.handleSubmit(async (values) => {
       try {
         const body = toVehicleInput(values);
-        await save.mutateAsync(vehicle ? { ...body, version: vehicle.version } : { ...body, status });
-        toast.success(vehicle ? "Changes saved" : status === "ACTIVE" ? "Vehicle listed" : "Draft saved");
-        router.push("/dashboard/fleet");
+        const saved = await save.mutateAsync(vehicle ? { ...body, version: vehicle.version } : { ...body, status });
+        if (vehicle) {
+          toast.success("Changes saved");
+          router.push("/dashboard/fleet");
+        } else {
+          toast.success(status === "ACTIVE" ? "Vehicle listed" : "Draft saved", "Now add some photos.");
+          router.push(`/dashboard/fleet/${saved.id}`);
+        }
       } catch (error) {
         if (error instanceof ApiError) {
           for (const [field, message] of Object.entries(error.fieldErrors)) {
@@ -76,11 +82,15 @@ export function VehicleForm({ vehicle }: { vehicle?: OwnerVehicle }) {
         <CardHeader>
           <CardTitle>Photos</CardTitle>
         </CardHeader>
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-strong px-6 py-10 text-center">
-          <ImagePlus aria-hidden className="size-8 text-icon" />
-          <p className="font-heading font-medium text-heading">Photo uploads are coming soon</p>
-          <p className="text-xs">Your listing shows a placeholder until photos can be added.</p>
-        </div>
+        {vehicle ? (
+          <PhotoManager vehicle={vehicle} />
+        ) : (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-strong px-6 py-10 text-center">
+            <ImagePlus aria-hidden className="size-8 text-icon" />
+            <p className="font-heading font-medium text-heading">Add photos after saving</p>
+            <p className="text-xs">Save the car first and you go straight to its photos.</p>
+          </div>
+        )}
       </Card>
 
       <Card>

@@ -20,6 +20,7 @@ type VehicleImageProps = {
   ratio?: keyof typeof ratios;
   /** Passed to next/image so the browser picks the right size. */
   sizes?: string;
+  /** Above-the-fold image: load eagerly with high priority. */
   priority?: boolean;
   className?: string;
   children?: React.ReactNode;
@@ -37,7 +38,15 @@ export function VehicleImage({
   return (
     <div className={cn("relative overflow-hidden bg-placeholder", ratios[ratio], className)}>
       {src ? (
-        <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          className="object-cover"
+        />
       ) : (
         <div role="img" aria-label={alt} className="flex size-full items-center justify-center">
           <CarFront aria-hidden className="size-1/4 max-h-16 max-w-16 text-white" strokeWidth={1.25} />

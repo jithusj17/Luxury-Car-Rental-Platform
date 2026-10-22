@@ -3,6 +3,16 @@ import type { NextConfig } from "next";
 /** Where the Next.js server reaches the API (never exposed to the browser). */
 const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:4000";
 
+/**
+ * Hosts allowed for vehicle photos (comma-separated URL patterns), e.g. your S3/R2 public bucket:
+ * https://photos.example.com/vehicles/**
+ */
+const imagePatterns = (process.env.IMAGE_REMOTE_PATTERNS ?? "http://localhost:4000/uploads/**")
+  .split(",")
+  .map((pattern) => pattern.trim())
+  .filter(Boolean)
+  .map((pattern) => new URL(pattern));
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -18,6 +28,11 @@ const nextConfig: NextConfig = {
   experimental: { cpus: Number(process.env.NEXT_BUILD_CPUS) || undefined },
   // Shared request/response schemas are consumed as TypeScript source.
   transpilePackages: ["@car-rental/contracts"],
+  images: {
+    remotePatterns: imagePatterns,
+    // Only for local development, where photos are served from localhost. Never enable in production.
+    dangerouslyAllowLocalIP: process.env.IMAGES_ALLOW_LOCAL_IP === "true",
+  },
   turbopack: {
     rules: {
       "*.css": {
