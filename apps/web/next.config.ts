@@ -1,4 +1,8 @@
+import path from "node:path";
 import type { NextConfig } from "next";
+
+/** Docker builds set NEXT_OUTPUT=standalone: a self-contained server with only the files it needs. */
+const standalone = process.env.NEXT_OUTPUT === "standalone";
 
 /** Where the Next.js server reaches the API (never exposed to the browser). */
 const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:4000";
@@ -24,6 +28,11 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  ...(standalone && {
+    output: "standalone" as const,
+    // Monorepo: trace dependencies from the repository root (shared contracts package).
+    outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
+  }),
   // Cap build workers on memory-constrained machines/CI (default: one per CPU core).
   experimental: { cpus: Number(process.env.NEXT_BUILD_CPUS) || undefined },
   // Shared request/response schemas are consumed as TypeScript source.

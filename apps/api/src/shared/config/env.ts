@@ -101,7 +101,9 @@ export type Env = z.infer<typeof envSchema> & {
 };
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const parsed = envSchema.safeParse(source);
+  // Empty values (e.g. `S3_ENDPOINT=` in an env file) mean "not set".
+  const cleaned = Object.fromEntries(Object.entries(source).filter(([, value]) => value !== ""));
+  const parsed = envSchema.safeParse(cleaned);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
     throw new Error(`Invalid environment configuration:\n${issues}`);
