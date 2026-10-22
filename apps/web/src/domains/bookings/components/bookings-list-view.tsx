@@ -66,7 +66,7 @@ export function BookingsListView({ perspective }: { perspective: "renter" | "own
       ) : (
         <div className="flex flex-col gap-6">
           <p className="text-sm" aria-live="polite">
-            <span className="font-semibold text-primary">{query.data.total}</span> results found
+            <span className="font-semibold text-primary">{query.data.total}</span> {query.data.total === 1 ? "result" : "results"} found
           </p>
           <BookingsTable bookings={query.data.items} perspective={perspective} />
           <Pagination page={page} pageCount={Math.ceil(query.data.total / PAGE_SIZE)} onPageChange={setPage} />
