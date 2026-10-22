@@ -31,7 +31,7 @@ A full-stack car rental marketplace, in the style of Turo or Getaround. **Renter
 
 <p align="center"><img src="docs/screenshots/mobile-home.png" alt="Mobile home page" width="260"></p>
 
-*Car photos show placeholders in the seeded demo data. Hosts upload real photos from the fleet editor.*
+*Demo car photos are freely licensed images from Wikimedia Commons ([credits](docs/photo-credits.md)). Hosts upload their own photos from the fleet editor.*
 
 ## Tech stack
 
@@ -204,4 +204,5 @@ See [docs/deployment.md](docs/deployment.md): Docker images for the API and web 
 - [`docs/operations.md`](docs/operations.md) — configuration, health checks, metrics, alerts, runbooks
 - [`docs/engineering-guidelines.md`](docs/engineering-guidelines.md) — engineering principles and project decisions
 - [`docs/known-gaps.md`](docs/known-gaps.md) — what isn't built yet
+- [`docs/photo-credits.md`](docs/photo-credits.md) — authors and licences of the demo car photos
 - [`apps/web/README.md`](apps/web/README.md) and [`apps/api/README.md`](apps/api/README.md) — app-specific notes
