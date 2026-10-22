@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Currency, PaymentStatus } from "@car-rental/contracts";
-import { and, asc, eq, inArray, lt, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, lt, ne, sql } from "drizzle-orm";
 import { isPgError, PgErrorCode } from "../../../shared/db/pg-errors.ts";
 import type { TransactionManager } from "../../../shared/db/transaction.ts";
 import type { PaymentRepository, WebhookInbox } from "../application/ports.ts";
@@ -95,6 +95,20 @@ export function createPaymentRepository(tx: TransactionManager): PaymentReposito
 
     async completeRefund(id, status, providerRefundId) {
       await db().update(refunds).set({ status, providerRefundId }).where(eq(refunds.id, id));
+    },
+
+    async listForAdmin({ status }, { page, pageSize }) {
+      const where = status ? eq(payments.status, status) : undefined;
+      const [rows, totals] = await Promise.all([
+        db().select().from(payments).where(where).orderBy(desc(payments.createdAt), desc(payments.id)).limit(pageSize).offset((page - 1) * pageSize),
+        db().select({ total: count() }).from(payments).where(where),
+      ]);
+      return { items: rows.map(toPayment), total: totals[0]?.total ?? 0 };
+    },
+
+    async refundedTotalCents() {
+      const [row] = await db().select({ cents: sql<string>`coalesce(sum(${payments.refundedCents}), 0)` }).from(payments);
+      return Number(row?.cents ?? 0);
     },
   };
 }

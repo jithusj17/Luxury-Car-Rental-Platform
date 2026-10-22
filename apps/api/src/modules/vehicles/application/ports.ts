@@ -31,6 +31,9 @@ export interface VehicleRepository {
   updateIfVersion(id: string, expectedVersion: number, patch: VehiclePatch): Promise<Vehicle | null>;
   search(filters: VehicleSearchFilters, page: Page): Promise<PageResult<Vehicle>>;
   listByOwner(ownerId: string, page: Page, status?: VehicleStatus): Promise<PageResult<Vehicle>>;
+  // Admin area
+  listForAdmin(filter: { q?: string; status?: VehicleStatus }, page: Page): Promise<PageResult<Vehicle>>;
+  countSummary(): Promise<{ total: number; listed: number }>;
 }
 
 /** Provided by the identity module. */

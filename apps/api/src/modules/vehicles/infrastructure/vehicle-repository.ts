@@ -91,6 +91,25 @@ export function createVehicleRepository(tx: TransactionManager): VehicleReposito
       return { items: rows.map(toVehicle), total: totals[0]?.total ?? 0 };
     },
 
+    async listForAdmin({ q, status }, { page, pageSize }) {
+      const where = and(
+        q ? sql`(${vehicles.make} || ' ' || ${vehicles.model} || ' ' || ${vehicles.city}) ilike ${likeLiteral(q)}` : undefined,
+        status ? eq(vehicles.status, status) : undefined,
+      );
+      const [rows, totals] = await Promise.all([
+        db().select().from(vehicles).where(where).orderBy(desc(vehicles.createdAt), asc(vehicles.id)).limit(pageSize).offset((page - 1) * pageSize),
+        db().select({ total: count() }).from(vehicles).where(where),
+      ]);
+      return { items: rows.map(toVehicle), total: totals[0]?.total ?? 0 };
+    },
+
+    async countSummary() {
+      const [row] = await db()
+        .select({ total: count(), listed: count(sql`case when ${vehicles.status} = 'ACTIVE' then 1 end`) })
+        .from(vehicles);
+      return row ?? { total: 0, listed: 0 };
+    },
+
     async listByOwner(ownerId, { page, pageSize }, status) {
       const where = and(eq(vehicles.ownerId, ownerId), status ? eq(vehicles.status, status) : undefined);
       const [rows, totals] = await Promise.all([

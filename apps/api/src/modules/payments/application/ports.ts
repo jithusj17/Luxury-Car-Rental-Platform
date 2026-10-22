@@ -44,6 +44,9 @@ export interface PaymentRepository {
   reserveRefund(refund: NewRefund): Promise<boolean>;
   findRefund(id: string): Promise<{ id: string; paymentId: string; amountCents: number; idempotencyKey: string; status: string } | null>;
   completeRefund(id: string, status: "SUCCEEDED" | "FAILED", providerRefundId: string | null): Promise<void>;
+  // Admin area
+  listForAdmin(filter: { status?: Payment["status"] }, page: { page: number; pageSize: number }): Promise<{ items: Payment[]; total: number }>;
+  refundedTotalCents(): Promise<number>;
 }
 
 export interface WebhookInbox {
@@ -80,5 +83,5 @@ export type PaymentDeps = {
 export const PAYMENT_JOBS = {
   refund: "payments.refund",
   cancelAtProvider: "payments.cancel-at-provider",
-} as const;
   cancelOpenForBooking: "payments.cancel-open-for-booking",
+} as const;

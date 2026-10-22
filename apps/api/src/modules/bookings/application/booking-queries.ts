@@ -48,6 +48,12 @@ export async function listOwnerBookings(deps: BookingDeps, user: User, query: Bo
   return { items: await toViews(deps, result.items), total: result.total };
 }
 
+/** All bookings on the platform, newest first (admin area). Authorization is the caller's job. */
+export async function listBookingsForAdmin(deps: BookingDeps, filter: { status?: Booking["status"] }, page: { page: number; pageSize: number }) {
+  const result = await deps.bookings.listForAdmin(filter, page);
+  return { items: await toViews(deps, result.items), total: result.total };
+}
+
 /**
  * Owner earnings: the rental subtotal (service fee excluded) of confirmed trips, plus the
  * non-refunded share of trips cancelled after payment.

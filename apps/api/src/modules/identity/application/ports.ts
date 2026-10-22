@@ -15,6 +15,11 @@ export interface UserRepository {
   addRole(id: string, role: UserRole): Promise<User>;
   /** Display names for many users in one query (avoids N+1 in list views). */
   findNames(ids: string[]): Promise<Map<string, string>>;
+  // Admin area
+  listForAdmin(filter: { q?: string; role?: UserRole }, page: { page: number; pageSize: number }): Promise<{ items: User[]; total: number }>;
+  countSummary(): Promise<{ total: number; hosts: number; admins: number; suspended: number }>;
+  setRoles(id: string, roles: UserRole[]): Promise<User | null>;
+  setSuspended(id: string, suspendedAt: Date | null): Promise<User | null>;
 }
 
 export type SessionRecord = { id: string; userId: string; expiresAt: Date };

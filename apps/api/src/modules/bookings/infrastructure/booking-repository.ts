@@ -122,6 +122,36 @@ export function createBookingRepository(tx: TransactionManager): BookingReposito
     listForRenter: (renterId, filter, page) => list(eq(bookings.renterId, renterId), filter, page),
     listForOwner: (ownerId, filter, page) => list(eq(bookings.ownerId, ownerId), filter, page),
 
+    async listForAdmin({ status }, { page, pageSize }) {
+      const where = status ? eq(bookings.status, status) : undefined;
+      const [rows, totals] = await Promise.all([
+        db().select().from(bookings).where(where).orderBy(desc(bookings.createdAt), desc(bookings.id)).limit(pageSize).offset((page - 1) * pageSize),
+        db().select({ total: count() }).from(bookings).where(where),
+      ]);
+      return { items: rows.map(toBooking), total: totals[0]?.total ?? 0 };
+    },
+
+    async adminStats() {
+      const rows = await db()
+        .select({
+          status: bookings.status,
+          n: count(),
+          totalCents: sql<string>`coalesce(sum(${bookings.totalCents}), 0)`,
+          feeCents: sql<string>`coalesce(sum(${bookings.serviceFeeCents}), 0)`,
+        })
+        .from(bookings)
+        .groupBy(bookings.status);
+      const byStatus: Record<BookingStatus, number> = { PENDING_PAYMENT: 0, CONFIRMED: 0, CANCELLED: 0, EXPIRED: 0 };
+      for (const row of rows) byStatus[row.status as BookingStatus] = row.n;
+      const confirmed = rows.find((r) => r.status === "CONFIRMED");
+      return {
+        total: rows.reduce((sum, r) => sum + r.n, 0),
+        byStatus,
+        confirmedTotalCents: Number(confirmed?.totalCents ?? 0),
+        confirmedServiceFeeCents: Number(confirmed?.feeCents ?? 0),
+      };
+    },
+
     async ownerEarningRows(ownerId) {
       const rows = await db()
         .select()

@@ -1,5 +1,5 @@
 import type { UserRole } from "@car-rental/contracts";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { isPgError, PgErrorCode } from "../../../shared/db/pg-errors.ts";
 import type { TransactionManager } from "../../../shared/db/transaction.ts";
 import type { UserRepository } from "../application/ports.ts";

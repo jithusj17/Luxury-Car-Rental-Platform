@@ -27,6 +27,14 @@ export interface BookingRepository {
   listForRenter(renterId: string, filter: BookingListFilter, page: Page): Promise<{ items: Booking[]; total: number }>;
   listForOwner(ownerId: string, filter: BookingListFilter, page: Page): Promise<{ items: Booking[]; total: number }>;
   ownerEarningRows(ownerId: string): Promise<Pick<Booking, "status" | "pickupDate" | "returnDate" | "price" | "refundPercent">[]>;
+  // Admin area
+  listForAdmin(filter: { status?: BookingStatus }, page: Page): Promise<{ items: Booking[]; total: number }>;
+  adminStats(): Promise<{
+    total: number;
+    byStatus: Record<BookingStatus, number>;
+    confirmedTotalCents: number;
+    confirmedServiceFeeCents: number;
+  }>;
 }
 
 export type CalendarEntryRecord = {
@@ -40,6 +48,13 @@ export type CalendarEntryRecord = {
 };
 
 export interface CalendarRepository {
+  /**
+   * Serializes calendar writes for one vehicle until the transaction ends. The exclusion
+   * constraint alone already guarantees correctness, but concurrent conflicting inserts can
+   * deadlock inside Postgres; queuing writers per vehicle turns that into fast, clean conflicts.
+   * Must be taken before any booking row lock in the same transaction (consistent lock order).
+   */
+  lockVehicleCalendar(vehicleId: string): Promise<void>;
   /** @throws ReservationConflictError when the period overlaps an active entry. */
   addBookingEntry(input: { bookingId: string; vehicleId: string; period: Period; createdBy: string }): Promise<void>;
   /** @throws ReservationConflictError when re-activating would overlap. */
@@ -48,13 +63,6 @@ export interface CalendarRepository {
   addBlock(input: { id: string; vehicleId: string; period: Period; note: string | null; createdBy: string }): Promise<void>;
   findBlock(id: string): Promise<{ id: string; vehicleId: string; period: Period; note: string | null } | null>;
   deleteBlock(id: string): Promise<void>;
-  /**
-   * Serializes calendar writes for one vehicle until the transaction ends. The exclusion
-   * constraint alone already guarantees correctness, but concurrent conflicting inserts can
-   * deadlock inside Postgres; queuing writers per vehicle turns that into fast, clean conflicts.
-   * Must be taken before any booking row lock in the same transaction (consistent lock order).
-   */
-  lockVehicleCalendar(vehicleId: string): Promise<void>;
   /** Entries that currently block the vehicle (lapsed, unswept holds excluded). */
   listBlockingEntries(vehicleId: string, range: Period, now: Date): Promise<CalendarEntryRecord[]>;
   vehicleIdsBlockedDuring(period: Period, now: Date): Promise<string[]>;
