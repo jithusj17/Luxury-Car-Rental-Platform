@@ -1,6 +1,8 @@
 # Luxury Car Rental Platform
 
-A full-stack car rental platform: renters search cars, book dates and pay; hosts list vehicles, manage availability and track earnings. Bookings can never overlap — the database enforces it.
+[![CI](https://github.com/jithusj17/Luxury-Car-Rental-Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/jithusj17/Luxury-Car-Rental-Platform/actions/workflows/ci.yml)
+
+A full-stack car rental platform: renters search cars, book dates and pay; hosts list vehicles, manage availability and track earnings; admins moderate users, listings and bookings. Bookings can never overlap — the database enforces it.
 
 - **Frontend:** Next.js 16 + React 19 + Tailwind CSS 4 → [`apps/web`](apps/web)
 - **Backend API:** Node.js 24 + Fastify 5 + PostgreSQL 17 (Drizzle ORM) → [`apps/api`](apps/api)
@@ -15,8 +17,8 @@ A full-stack car rental platform: renters search cars, book dates and pay; hosts
 ├── apps/
 │   ├── web/                     # Frontend (Next.js) — http://localhost:3000
 │   │   ├── src/
-│   │   │   ├── app/             # Routes: (public), (auth), dashboard
-│   │   │   ├── domains/         # Features: auth, vehicles, bookings, payments, owner
+│   │   │   ├── app/             # Routes: (public), (auth), dashboard, admin
+│   │   │   ├── domains/         # Features: auth, vehicles, bookings, payments, owner, admin
 │   │   │   ├── shared/          # Design system (components/ui), API client, hooks, utils
 │   │   │   ├── shell/           # Header, footer, dashboard shell, navigation, providers
 │   │   │   └── proxy.ts         # Redirects signed-out visitors away from /dashboard and /checkout
@@ -25,7 +27,7 @@ A full-stack car rental platform: renters search cars, book dates and pay; hosts
 │   │   └── .env.example
 │   └── api/                     # Backend API (Fastify) — http://localhost:4000
 │       ├── src/
-│       │   ├── modules/         # identity, vehicles, bookings, payments, notifications
+│       │   ├── modules/         # identity, vehicles, bookings, payments, notifications, admin
 │       │   ├── shared/          # config, db, http, outbox, jobs, logging, errors
 │       │   ├── scripts/         # seed, reset-db, load-test
 │       │   ├── app.ts           # Fastify app setup
@@ -36,6 +38,7 @@ A full-stack car rental platform: renters search cars, book dates and pay; hosts
 │       └── .env.example
 ├── packages/
 │   └── contracts/               # Zod schemas shared by web and api
+├── .github/workflows/ci.yml     # CI: typecheck, lint, tests, build, end-to-end tests
 ├── docs/                        # Architecture, operations, known gaps
 ├── docker-compose.yml           # PostgreSQL and Redis for local development
 ├── package.json                 # Workspace scripts (run from the repository root)
@@ -52,6 +55,7 @@ A full-stack car rental platform: renters search cars, book dates and pay; hosts
 | Checkout | `apps/web/src/app/(public)/checkout/[bookingId]/page.tsx` |
 | Login / register pages | `apps/web/src/app/(auth)/` |
 | Renter and host dashboard pages | `apps/web/src/app/dashboard/` |
+| Admin pages | `apps/web/src/app/admin/` |
 | Reusable UI components | `apps/web/src/shared/components/ui/` |
 | Design tokens (colors, fonts, radii) | `apps/web/src/app/globals.css` |
 | API endpoints (routes) | `apps/api/src/modules/*/presentation/` |
@@ -98,6 +102,15 @@ Then open:
 |---|---|
 | Host (can list cars) | `owner@example.com` |
 | Renter | `renter@example.com` |
+| Admin | `admin@example.com` |
+
+Where to go after signing in:
+
+| Role | Pages |
+|---|---|
+| Renter | `/dashboard` (overview), `/dashboard/bookings`, `/dashboard/profile` |
+| Host | `/dashboard/fleet`, `/dashboard/fleet/new`, `/dashboard/availability`, `/dashboard/requests`, `/dashboard/earnings` |
+| Admin | `/admin` (overview), `/admin/users`, `/admin/vehicles`, `/admin/bookings`, `/admin/payments`, `/admin/audit-log` |
 
 Payments use a built-in **test payment provider** — no real money. Test cards:
 
@@ -132,8 +145,10 @@ All commands run from the repository root.
 | `pnpm test` | Unit and integration tests (needs `docker compose up -d`) |
 | `pnpm e2e` | Build the web app and run the Playwright browser tests |
 | `pnpm db:migrate` | Apply database migrations |
-| `pnpm db:seed` | Load demo accounts and sample cars |
+| `pnpm db:seed` | Load demo accounts (renter, host, admin) and sample cars |
 | `pnpm load-test` | Load test against an API on port 4100 (see `apps/api/src/scripts/load-test.ts`) |
+
+Every push and pull request runs the same checks on GitHub Actions (`.github/workflows/ci.yml`).
 
 On machines with little memory, limit the build workers: `NEXT_BUILD_CPUS=4 pnpm build`.
 

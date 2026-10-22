@@ -43,6 +43,10 @@ Every response carries `x-request-id` (an incoming well-formed id is propagated)
 
 **Suspected double booking.** Impossible at the database level while `vehicle_reservations_no_overlap` exists: `select conname from pg_constraint where conname = 'vehicle_reservations_no_overlap'`. Never drop or disable it in a migration.
 
+## Admin audit trail
+
+Every admin action (role change, suspension, listing status change, booking cancellation) is recorded in `admin_audit_log` with the admin, target and details, and is visible at `/admin/audit-log`. The table is append-only; retain it as long as bookings and payments.
+
 ## Data retention
 
 - `sessions`: expired rows purged hourly.

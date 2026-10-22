@@ -21,6 +21,7 @@ Each module is split into `domain` (pure rules, no I/O), `application` (use case
 | bookings | `bookings`, `vehicle_reservations` | Quotes, holds, the vehicle calendar, cancellation policy, owner blocks, earnings |
 | payments | `payments`, `refunds`, `payment_webhook_events` (+ mock provider tables) | Payment attempts, webhooks, refunds, reconciliation |
 | notifications | — | Email templates and delivery (via the outbox) |
+| admin | `admin_audit_log` | Back office: platform overview, user roles and suspension, listing and booking moderation, payments view, audit trail |
 
 Rules:
 - A module never queries another module's tables. Cross-module needs go through **ports** (e.g. bookings uses `VehicleCatalog`, payments uses `BookingGateway`), wired in `src/container.ts` — the only composition root.
@@ -40,6 +41,7 @@ Rules:
 
   A concurrent conflicting insert waits for the other transaction and then fails with `23P01`, mapped to `409 BOOKING_CONFLICT`. No "check then insert" logic is trusted.
 - Statuses: `PENDING_PAYMENT` (15-minute hold) → `CONFIRMED` | `CANCELLED` | `EXPIRED`; `EXPIRED → CONFIRMED` only for a late payment when the dates are still free. Blocking statuses: `PENDING_PAYMENT`, `CONFIRMED`.
+- **Contention:** every calendar write (booking, owner block, reviving a lapsed hold) first takes a per-vehicle advisory lock (`pg_advisory_xact_lock`). Without it, many simultaneous overlapping inserts can deadlock inside Postgres (the constraint still holds, but losers wait seconds and fail). With it, conflicting requests queue per vehicle and fail fast with 409; other vehicles are unaffected. Lock order is always *vehicle calendar → booking row*, and booking transactions never lock payment rows (open-payment cancellation is deferred to the outbox), so the payment webhook path (*payment → calendar → booking*) can't form a cycle. Any remaining deadlock or serialization failure is returned as a retryable 503.
 - Lapsed holds are reclaimed **inside** the next booking/block transaction for the same dates (and by a 30-second sweeper), so availability never waits for a background job.
 - **Idempotency:** `POST /v1/bookings` requires `Idempotency-Key`. `(renter_id, idempotency_key)` is unique; a replay returns the original booking (200), a different payload with the same key returns 422, concurrent duplicates resolve to the single winner.
 - Price is computed on the server (daily rate × days + 10% service fee) and snapshotted on the booking.
@@ -63,6 +65,10 @@ renter ─POST /bookings/:id/payments─▶ payment REQUIRES_ACTION (one open-or
 - Cancellation policy: renter ≥48h before pickup → 100%, until pickup → 50%, after → not cancellable; host/admin until the return day → 100%.
 
 The mock provider implements the same `PaymentProvider` port a real provider (e.g. Stripe) would; startup refuses `PAYMENT_PROVIDER=mock` in production.
+
+## Admin area
+
+`/v1/admin/*` (API) and `/admin` (web). Every route requires the `admin` role, checked on the server. Admin changes go through the owning module's use cases, so the normal rules apply (vehicle status transitions; admin cancellations refund in full under the cancellation policy). Each change is written to `admin_audit_log` in the same transaction. Guard rails: admins can't remove their own admin role or suspend themselves, and can only cancel bookings they aren't party to through the audited admin endpoint (a reason is required). Suspended users can't sign in and their existing sessions stop working immediately.
 
 ## Security model
 
