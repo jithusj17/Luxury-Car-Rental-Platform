@@ -1,0 +1,15 @@
+# Local rehearsal of the production stack with stand-ins for the external services:
+# Mailpit (SMTP), SeaweedFS (S3) and stripe-mock (Stripe). Run deploy/smoke-test.sh.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.27
+  s3:
+    image: chrislusf/seaweedfs:3.97
+    command: server -s3 -s3.port=8333 -dir=/data -volume.max=5
+  stripe-mock:
+    image: stripe/stripe-mock:v0.197.0
+  api:
+    depends_on:
+      mailpit: { condition: service_started }
+      s3: { condition: service_started }
+      stripe-mock: { condition: service_started }

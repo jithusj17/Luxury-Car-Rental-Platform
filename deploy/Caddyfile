@@ -1,0 +1,19 @@
+# One public origin: the API under /api, the web app for everything else.
+# DOMAIN is a hostname (e.g. carrental.example.com) → automatic HTTPS via Let's Encrypt.
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# /api/v1/... → API /v1/... (Stripe webhooks: https://DOMAIN/api/v1/payments/webhooks/stripe)
+	handle_path /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

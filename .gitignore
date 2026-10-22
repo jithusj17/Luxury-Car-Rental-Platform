@@ -9,3 +9,5 @@ coverage/
 !.env.example
 playwright-report/
 test-results/
+!.env.production.example
+!deploy/.env.smoke
