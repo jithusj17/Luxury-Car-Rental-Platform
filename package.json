@@ -1,0 +1,19 @@
+{
+  "name": "car-rental",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter api --filter web dev",
+    "build": "pnpm --filter web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "e2e": "pnpm --filter web build && pnpm --filter web e2e",
+    "db:migrate": "pnpm --filter api db:migrate",
+    "db:seed": "pnpm --filter api db:seed",
+    "load-test": "pnpm --filter api exec node src/scripts/load-test.ts"
+  },
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=24"
+  }
+}
