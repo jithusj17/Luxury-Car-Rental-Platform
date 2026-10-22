@@ -1,5 +1,6 @@
 import type { VehicleCategory } from "@car-rental/contracts";
 import { ArrowRight, CarFront, KeyRound } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { searchVehicles } from "@/domains/vehicles/api.server";
@@ -15,9 +16,10 @@ const featuredCategories: VehicleCategory[] = ["sedan", "suv", "hatchback", "van
 export default function HomePage() {
   return (
     <>
-      {/* Hero: background photo deferred; the grey block + overlay keep the template's layout. */}
+      {/* Hero photo and body-type tiles: demo images from public/images/home (credits: docs/photo-credits.md). */}
       <section className="relative bg-placeholder">
-        <div aria-hidden className="absolute inset-0 bg-black/45" />
+        <Image src="/images/home/hero.jpg" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div aria-hidden className="absolute inset-0 bg-linear-to-r from-black/75 via-black/45 to-black/15" />
         <div className="container-site relative flex min-h-[520px] flex-col justify-center gap-8 py-16 lg:min-h-[640px]">
           <div className="flex max-w-3xl flex-col gap-5">
             <h1 className="text-h1 font-semibold text-white sm:text-display">Rent the right car for every trip</h1>
@@ -38,7 +40,7 @@ export default function HomePage() {
           {featuredCategories.map((category) => (
             <li key={category}>
               <Link href={`/cars?category=${category}`} className="group flex flex-col items-center gap-3 rounded-xl border border-border p-4 transition-colors hover:border-primary">
-                <VehicleImage src={null} alt="" ratio="thumb" className="w-full rounded-lg" />
+                <VehicleImage src={`/images/home/${category}.jpg`} alt="" ratio="thumb" sizes="(min-width: 1024px) 200px, 45vw" className="w-full rounded-lg" />
                 <span className="font-heading font-medium text-heading group-hover:text-primary">{categoryLabels[category]}</span>
               </Link>
             </li>
