@@ -23,7 +23,8 @@ export default defineConfig({
     {
       // A disposable database per run, so journeys never touch development data.
       // `.env` is optional so the same command works in CI, where settings come from `env` below.
-      command: "node --env-file-if-exists=.env src/scripts/reset-db.ts && node --env-file-if-exists=.env src/main.ts",
+      command:
+        "node --env-file-if-exists=.env src/scripts/reset-db.ts && node --env-file-if-exists=.env src/scripts/seed.ts && node --env-file-if-exists=.env src/main.ts",
       cwd: "../api",
       url: "http://localhost:4000/health/ready",
       reuseExistingServer: false,
