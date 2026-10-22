@@ -9,7 +9,7 @@
 - Payments go through a provider port; a signed mock provider is used until a real provider is chosen.
 - Redis only for distributed rate limiting in production; in-memory limiter for dev/test.
 - Brand color `#FF7101` is kept as designed (known contrast gap for white-on-orange text — documented, not fixed).
-- No AI features. Vehicle photos stay as `VehicleImage` placeholders.
+- No AI features. Demo cars use freely licensed Wikimedia Commons photos (`apps/api/seed-photos`, credits in `docs/photo-credits.md`), uploaded by the seed through the normal photo use case; `VehicleImage` shows a placeholder when a car has no photos.
 
 ## 1. Project Mission
 

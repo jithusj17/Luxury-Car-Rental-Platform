@@ -3,9 +3,12 @@
  *   owner@example.com / password1234   (owner + renter)
  *   renter@example.com / password1234  (renter)
  *   admin@example.com / password1234   (admin)
+ * Demo cars get the freely licensed photos in `seed-photos/` (credits: docs/photo-credits.md).
  */
+import { readdir, readFile } from "node:fs/promises";
 import type { CreateVehicleBody } from "@car-rental/contracts";
 import { createVehicle } from "../modules/vehicles/application/owner-vehicle-use-cases.ts";
+import { addPhoto } from "../modules/vehicles/application/photo-use-cases.ts";
 import { register } from "../modules/identity/application/session-use-cases.ts";
 import { becomeOwner } from "../modules/identity/application/account-use-cases.ts";
 import { createContainer } from "../container.ts";
@@ -41,6 +44,13 @@ const fleet: Omit<CreateVehicleBody, keyof typeof base>[] = [
   { make: "Renault", model: "Zoe", year: 2022, category: "hatchback", seats: 5, transmission: "automatic", fuelType: "electric", dailyRateCents: 3_500, city: "Lisbon", timezone: "Europe/Lisbon" },
 ];
 
+const photoDir = new URL("../../seed-photos/", import.meta.url);
+const photoFiles = await readdir(photoDir);
+
+/** "Audi TT Coupé" → "audi-tt-coupe", the prefix of that car's files in seed-photos/. */
+const slug = (make: string, model: string) =>
+  `${make} ${model}`.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 try {
   const owner = await becomeOwner(identity, (await account("owner@example.com", "Olivia Owner")).id);
   await account("renter@example.com", "Rui Renter");
@@ -57,7 +67,17 @@ try {
       });
     }
   }
-  console.log(`Seeded: owner@ / renter@ / admin@example.com (password1234), ${fleet.length} vehicles`);
+  // Also fills in photos for demo cars seeded before photos existed; cars that have photos are left alone.
+  const { items } = await vehicles.vehicles.listByOwner(owner.id, { page: 1, pageSize: 50 });
+  let photos = 0;
+  for (const vehicle of items.filter((v) => v.imageUrls.length === 0)) {
+    const prefix = `${slug(vehicle.make, vehicle.model)}-`;
+    for (const file of photoFiles.filter((f) => f.startsWith(prefix) && f.endsWith(".jpg")).sort()) {
+      await addPhoto(vehicles, owner, vehicle.id, await readFile(new URL(file, photoDir)));
+      photos++;
+    }
+  }
+  console.log(`Seeded: owner@ / renter@ / admin@example.com (password1234), ${fleet.length} vehicles, ${photos} new photos`);
 } finally {
   await container.close();
 }
