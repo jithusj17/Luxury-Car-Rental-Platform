@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens, extracted from the AutoDeal Figma template
+ * (file jECzlRVaxooXMqFDLPtL9W — local paint/text/effect styles).
+ * Names in comments are the original Figma style names.
+ */
+@theme {
+  /* Colors */
+  --color-primary: #ff7101; /* Main color */
+  --color-primary-hover: #e86600;
+  --color-primary-foreground: #ffffff;
+  --color-primary-soft: rgb(255 113 1 / 0.06); /* Main 6% */
+  --color-heading: #24272c; /* Heading — also dark sidebar / footer */
+  --color-body: #696665; /* Text */
+  --color-icon: #b6b6b6; /* Icon */
+  --color-border: #ededed; /* Line */
+  --color-border-strong: #e4e4e4; /* Line 2 */
+  --color-surface: #f2f2f2;
+  --color-placeholder: #d9d9d9; /* image placeholders */
+  --color-success: #7ed321; /* Success */
+  --color-success-strong: #3f7a0b; /* AA text on success-soft */
+  --color-success-soft: rgb(126 211 33 / 0.12);
+  --color-danger: #ee6742;
+  --color-danger-strong: #b93a17;
+  --color-danger-soft: rgb(238 103 66 / 0.12);
+  --color-info: #6e55ff;
+  --color-info-strong: #4a33d6;
+  --color-info-soft: rgb(110 85 255 / 0.12);
+
+  /* Fonts — Outfit for headings/labels ("Body Title"), Inter for body ("Body Text") */
+  --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale (Displays, H1–H5). Body sizes use Tailwind's text-xs/sm/base. */
+  --text-display: 4.375rem; /* 70 */
+  --text-display--line-height: 1;
+  --text-h1: 2.5rem; /* 40 */
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.875rem; /* 30 */
+  --text-h2--line-height: 1.25;
+  --text-h3: 1.5rem; /* 24 */
+  --text-h3--line-height: 1.3;
+  --text-h4: 1.25rem; /* 20 */
+  --text-h4--line-height: 1.3;
+  --text-h5: 1.125rem; /* 18 */
+  --text-h5--line-height: 1.3;
+  --text-xs--line-height: 1.4;
+  --text-sm--line-height: 1.4;
+  --text-base--line-height: 1.4;
+
+  /* Radii — 6 chips, 10 inputs/nav items, 14 buttons/cards, 16 panels, 30 modals */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-3xl: 30px;
+
+  /* Effects (Drop Shadow styles) */
+  --shadow-sm: 0 2px 6px rgb(36 39 44 / 0.08);
+  --shadow-lg: 0 30px 60px rgb(36 39 44 / 0.08);
+}
+
+/* 1290px content column used by every public page (315px gutters at 1920). */
+@utility container-site {
+  margin-inline: auto;
+  width: 100%;
+  max-width: calc(1290px + 2rem);
+  padding-inline: 1rem;
+}
+
+/* react-day-picker themed with the brand tokens. */
+.rdp-brand {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: var(--color-primary-soft);
+  --rdp-range_middle-background-color: var(--color-primary-soft);
+  --rdp-range_middle-color: var(--color-heading);
+  --rdp-day-height: 40px;
+  --rdp-day-width: 40px;
+  --rdp-day_button-height: 38px;
+  --rdp-day_button-width: 38px;
+  font-family: var(--font-sans);
+  color: var(--color-heading);
+}
+.rdp-brand .rdp-disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+@layer base {
+  body {
+    @apply bg-white font-sans text-sm text-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading text-heading;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+}
