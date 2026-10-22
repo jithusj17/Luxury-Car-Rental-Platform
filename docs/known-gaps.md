@@ -4,10 +4,11 @@ Intentionally not built yet, or built with a documented stand-in.
 
 | Area | Status | Notes |
 |---|---|---|
-| Vehicle photos | Placeholders | `VehicleImage` keeps every aspect ratio; `imageUrls` is in the data model and API. Needs licensed images, upload endpoint (type/size validation), object storage, and `images.remotePatterns` in `next.config.ts`. |
-| Real payment provider | Mock provider | Implement `PaymentProvider` (e.g. Stripe PaymentIntents + hosted fields), set its webhook secret, remove the mock card step from checkout. |
+| Vehicle photos | Built | Hosts upload photos (local disk in development, S3-compatible in production). Sample/seed cars still use placeholders; no image resizing pipeline beyond Next.js image optimisation. |
+| Payments | Built (Stripe) | Stripe PaymentIntents + Payment Element; the mock provider remains for development and tests. Needs your Stripe account keys. Tested against stripe-mock, not yet against live Stripe. |
 | Owner payouts | Not built | Earnings are reported; transfers to hosts are not automated. |
-| Email delivery | Logged only | Swap `createLogEmailSender` for an SMTP/API sender. |
+| Email delivery | Built (SMTP) | Needs your SMTP provider credentials. Tested against Mailpit. |
+| Deployment | Built (Docker) | Images, production compose with HTTPS, smoke test in CI. Needs a server, domain and the accounts above; not deployed anywhere yet. |
 | Email verification, social login | Not built | Figma shows Google/Facebook buttons; omitted. |
 | Favorites, messages, reviews, compare, blog, dealer/agent pages | Not built | Present in the Figma template but outside the rental scope agreed in the plan. Removed from navigation so there are no dead links. |
 | Owner approval of bookings | Not needed | Bookings confirm instantly on payment (agreed). |

@@ -40,7 +40,8 @@ A full-stack car rental platform: renters search cars, book dates and pay; hosts
 │   └── contracts/               # Zod schemas shared by web and api
 ├── .github/workflows/ci.yml     # CI: typecheck, lint, tests, build, end-to-end tests
 ├── docs/                        # Architecture, operations, known gaps
-├── docker-compose.yml           # PostgreSQL and Redis for local development
+├── deploy/                      # Production: docker-compose.prod.yml, Caddyfile, env example, smoke test
+├── docker-compose.yml           # Local services: PostgreSQL, Redis, Mailpit (+ optional S3 and stripe-mock)
 ├── package.json                 # Workspace scripts (run from the repository root)
 ├── pnpm-workspace.yaml
 └── CLAUDE.md                    # Engineering guidelines for the project
@@ -81,7 +82,7 @@ git clone https://github.com/jithusj17/Luxury-Car-Rental-Platform.git
 cd Luxury-Car-Rental-Platform
 
 pnpm install                                   # installs web, api and contracts together
-docker compose up -d                           # PostgreSQL on :5433, Redis on :6380
+docker compose up -d                           # PostgreSQL :5433, Redis :6380, Mailpit (email inbox) :8025
 
 cp apps/api/.env.example apps/api/.env         # API settings
 cp apps/web/.env.example apps/web/.env.local   # web settings
@@ -121,7 +122,7 @@ Payments use a built-in **test payment provider** — no real money. Test cards:
 | `4000000000009995` | Insufficient funds |
 | `4000000000000259` | Succeeds without sending a webhook (tests reconciliation) |
 
-In development, emails (booking confirmations, password-reset links) are written to the API log instead of being sent.
+In development, emails (booking confirmations, password-reset links) are delivered to the local Mailpit inbox at http://localhost:8025. Photos uploaded by hosts are stored in `apps/api/uploads`.
 
 ### Running one app on its own
 
@@ -152,9 +153,14 @@ Every push and pull request runs the same checks on GitHub Actions (`.github/wor
 
 On machines with little memory, limit the build workers: `NEXT_BUILD_CPUS=4 pnpm build`.
 
+## Deploying to production
+
+See [docs/deployment.md](docs/deployment.md): Docker images for the API and web app, a production compose file with automatic HTTPS (Caddy), Stripe, SMTP email and S3-compatible photo storage. `bash deploy/smoke-test.sh` rehearses the production stack locally.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — modules, how double bookings are prevented, payments flow, security
-- [`docs/operations.md`](docs/operations.md) — configuration, deployment, health checks, metrics, alerts
+- [`docs/deployment.md`](docs/deployment.md) — accounts you need, configuration, start, update, backups
+- [`docs/operations.md`](docs/operations.md) — configuration, health checks, metrics, alerts, runbooks
 - [`docs/known-gaps.md`](docs/known-gaps.md) — what isn't built yet
 - [`apps/web/README.md`](apps/web/README.md) and [`apps/api/README.md`](apps/api/README.md) — app-specific notes
