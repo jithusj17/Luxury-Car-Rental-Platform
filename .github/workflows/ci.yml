@@ -38,6 +38,8 @@ jobs:
 
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      # The e2e stack serves uploaded photos from localhost (no .env files in CI).
+      IMAGES_ALLOW_LOCAL_IP: "true"
 
     steps:
       - uses: actions/checkout@v4

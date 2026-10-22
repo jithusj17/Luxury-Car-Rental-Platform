@@ -30,6 +30,8 @@ test("renter finds the car, pays, and cancels for a refund", async ({ page }) =>
   await page.goto("/cars?city=Testville");
   await page.getByRole("link", { name: `2026 E2E Motors ${model}` }).click();
   await expect(page.getByRole("heading", { name: `2026 E2E Motors ${model}` })).toBeVisible();
+  // The host's uploaded photo is the cover, rendered as a real image (not the placeholder).
+  await expect(page.locator(`img[alt="2026 E2E Motors ${model}"]`).first()).toBeVisible();
 
   // Owner-blocked nights (20–21) can't be picked; 10 → 13 is free.
   await pickDatesNextMonth(page, "Pick-up — Return", 10, 13);

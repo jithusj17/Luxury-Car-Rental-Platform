@@ -1,3 +1,4 @@
+import path from "node:path";
 import { expect, type Page } from "@playwright/test";
 
 export const uniqueEmail = (prefix: string) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;
@@ -37,7 +38,12 @@ export async function listVehicle(page: Page, model: string) {
   await page.getByLabel("City *").fill("Testville");
   await page.getByLabel("Air conditioning").check();
   await page.getByRole("button", { name: "List now" }).click();
-  await expect(page).toHaveURL(/\/dashboard\/fleet$/);
+  // After creating, the editor opens so photos can be added straight away.
+  await expect(page).toHaveURL(/\/dashboard\/fleet\/[0-9a-f-]{36}$/);
+  await page.getByLabel("Upload vehicle photos").setInputFiles(path.join(__dirname, "fixtures", "car.png"));
+  await expect(page.getByText("Cover")).toBeVisible();
+  await expect(page.getByText("1/10 photos", { exact: false })).toBeVisible();
+  await page.goto("/dashboard/fleet");
   await expect(page.getByText(`E2E Motors ${model}`)).toBeVisible();
 }
 

@@ -40,7 +40,8 @@ export default defineConfig({
     {
       command: "pnpm start --port 3000",
       url: "http://localhost:3000",
-      reuseExistingServer: !process.env.CI,
+      // Always start fresh: a leftover server would serve an older build's pages.
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],
