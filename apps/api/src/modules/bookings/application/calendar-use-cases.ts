@@ -58,6 +58,7 @@ export async function createBlock(deps: BookingDeps, user: User, body: CreateBlo
   const now = deps.clock.now();
   try {
     await deps.tx.run(async () => {
+      await deps.calendar.lockVehicleCalendar(body.vehicleId);
       await reclaimLapsedHolds(deps, body.vehicleId, period, now);
       await deps.calendar.addBlock(block);
     });

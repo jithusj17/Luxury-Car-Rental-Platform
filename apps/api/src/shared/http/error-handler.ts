@@ -2,7 +2,7 @@ import type { ErrorCode, ErrorResponse } from "@car-rental/contracts";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } from "fastify-type-provider-zod";
 import { AppError } from "../errors/app-error.ts";
-import { isDatabaseUnavailable } from "../db/pg-errors.ts";
+import { isDatabaseUnavailable, isTransientConflict } from "../db/pg-errors.ts";
 
 function send(reply: FastifyReply, request: FastifyRequest, status: number, code: ErrorCode, message: string, details?: unknown) {
   const body: ErrorResponse = { error: { code, message, requestId: request.id, ...(details !== undefined && { details }) } };
@@ -28,6 +28,11 @@ export function registerErrorHandling(app: FastifyInstance): void {
     if (isResponseSerializationError(error)) {
       request.log.error({ err: error }, "Response did not match its schema");
       return send(reply, request, 500, "INTERNAL_ERROR", "Something went wrong");
+    }
+    if (isTransientConflict(error)) {
+      request.log.warn({ err: error }, "Transient database conflict");
+      reply.header("retry-after", "1");
+      return send(reply, request, 503, "SERVICE_UNAVAILABLE", "The server was busy, please retry");
     }
     if (isDatabaseUnavailable(error)) {
       request.log.error({ err: error }, "Database unavailable");

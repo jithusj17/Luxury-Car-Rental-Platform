@@ -48,6 +48,13 @@ export interface CalendarRepository {
   addBlock(input: { id: string; vehicleId: string; period: Period; note: string | null; createdBy: string }): Promise<void>;
   findBlock(id: string): Promise<{ id: string; vehicleId: string; period: Period; note: string | null } | null>;
   deleteBlock(id: string): Promise<void>;
+  /**
+   * Serializes calendar writes for one vehicle until the transaction ends. The exclusion
+   * constraint alone already guarantees correctness, but concurrent conflicting inserts can
+   * deadlock inside Postgres; queuing writers per vehicle turns that into fast, clean conflicts.
+   * Must be taken before any booking row lock in the same transaction (consistent lock order).
+   */
+  lockVehicleCalendar(vehicleId: string): Promise<void>;
   /** Entries that currently block the vehicle (lapsed, unswept holds excluded). */
   listBlockingEntries(vehicleId: string, range: Period, now: Date): Promise<CalendarEntryRecord[]>;
   vehicleIdsBlockedDuring(period: Period, now: Date): Promise<string[]>;

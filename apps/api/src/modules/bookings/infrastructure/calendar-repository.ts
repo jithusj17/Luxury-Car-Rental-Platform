@@ -32,6 +32,11 @@ export function createCalendarRepository(tx: TransactionManager): CalendarReposi
   const db = () => tx.executor();
 
   return {
+    async lockVehicleCalendar(vehicleId) {
+      if (!tx.inTransaction) throw new Error("lockVehicleCalendar must run inside a transaction");
+      await db().execute(sql`select pg_advisory_xact_lock(hashtextextended(${`vehicle-calendar:${vehicleId}`}, 0))`);
+    },
+
     async addBookingEntry({ bookingId, vehicleId, period, createdBy }) {
       await guardOverlap(() =>
         db().insert(vehicleReservations).values({ id: bookingId, bookingId, vehicleId, period, kind: "BOOKING", createdBy }),

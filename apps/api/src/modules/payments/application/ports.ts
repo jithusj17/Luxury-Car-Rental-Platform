@@ -81,3 +81,4 @@ export const PAYMENT_JOBS = {
   refund: "payments.refund",
   cancelAtProvider: "payments.cancel-at-provider",
 } as const;
+  cancelOpenForBooking: "payments.cancel-open-for-booking",

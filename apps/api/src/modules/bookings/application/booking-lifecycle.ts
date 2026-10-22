@@ -82,7 +82,12 @@ export type PaidOutcome = "confirmed" | "already-confirmed" | "slot-lost" | "can
  */
 export async function confirmPaidBooking(deps: BookingDeps, bookingId: string): Promise<PaidOutcome> {
   const now = deps.clock.now();
+  // The vehicle id never changes, so it can be read before locking; the calendar lock is taken
+  // before the booking row lock, the same order booking creation uses.
+  const snapshot = await deps.bookings.findById(bookingId);
+  if (!snapshot) throw new Error(`Booking ${bookingId} not found for payment`);
   return deps.tx.run(async () => {
+    await deps.calendar.lockVehicleCalendar(snapshot.vehicleId);
     const booking = await deps.bookings.findByIdForUpdate(bookingId);
     if (!booking) throw new Error(`Booking ${bookingId} not found for payment`);
     if (booking.status === "CONFIRMED") return "already-confirmed";

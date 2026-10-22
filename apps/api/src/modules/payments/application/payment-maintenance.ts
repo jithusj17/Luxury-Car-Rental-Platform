@@ -15,13 +15,12 @@ export function createPaymentCoordinator(deps: PaymentDeps) {
       }
     },
 
+    /**
+     * Deferred to the outbox so booking transactions never lock payment rows (webhooks lock
+     * payment → calendar → booking; doing payment work here would invert that order).
+     */
     async cancelOpenPayment(bookingId: string): Promise<void> {
-      const payment = await deps.payments.findActiveForBooking(bookingId);
-      if (payment?.status !== "REQUIRES_ACTION") return;
-      await deps.payments.update(payment.id, { status: "CANCELLED" });
-      if (payment.providerPaymentId) {
-        await deps.outbox.enqueue(PAYMENT_JOBS.cancelAtProvider, { providerPaymentId: payment.providerPaymentId });
-      }
+      await deps.outbox.enqueue(PAYMENT_JOBS.cancelOpenForBooking, { bookingId });
     },
   };
 }
@@ -67,6 +66,22 @@ export async function executeRefund(deps: PaymentDeps, refundId: string): Promis
     idempotencyKey: refund.idempotencyKey,
   });
   await deps.payments.completeRefund(refundId, "SUCCEEDED", result.providerRefundId);
+}
+
+/** Outbox handler: stops a still-open payment attempt for a booking that no longer needs it. */
+export async function cancelOpenPaymentForBooking(deps: PaymentDeps, bookingId: string): Promise<void> {
+  await deps.tx.run(async () => {
+    const open = await deps.payments.findActiveForBooking(bookingId);
+    if (open?.status !== "REQUIRES_ACTION") return;
+    if (!open.providerPaymentId) {
+      await deps.payments.update(open.id, { status: "CANCELLED" });
+      return;
+    }
+    const locked = await deps.payments.findByProviderIdForUpdate(open.providerPaymentId);
+    if (locked?.status !== "REQUIRES_ACTION") return; // a webhook settled it meanwhile
+    await deps.payments.update(open.id, { status: "CANCELLED" });
+    await deps.outbox.enqueue(PAYMENT_JOBS.cancelAtProvider, { providerPaymentId: open.providerPaymentId });
+  });
 }
 
 /** Outbox handler: cancels at the provider; if it had already captured, run the late-success path. */

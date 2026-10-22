@@ -66,6 +66,7 @@ export async function createBooking(
 
   try {
     const booking = await deps.tx.run(async () => {
+      await deps.calendar.lockVehicleCalendar(vehicle.id);
       // Reclaim holds whose payment window lapsed but that the sweeper hasn't released yet.
       await reclaimLapsedHolds(deps, vehicle.id, period, now);
       const created = await deps.bookings.insert({

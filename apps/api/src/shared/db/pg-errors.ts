@@ -4,6 +4,8 @@ export const PgErrorCode = {
   foreignKeyViolation: "23503",
   checkViolation: "23514",
   exclusionViolation: "23P01",
+  serializationFailure: "40001",
+  deadlockDetected: "40P01",
 } as const;
 
 type PgLikeError = { code?: string; constraint?: string };
@@ -20,6 +22,11 @@ export function isPgError(error: unknown, code: string, constraint?: string): bo
   const pgError = unwrap(error);
   if (!pgError || pgError.code !== code) return false;
   return constraint === undefined || pgError.constraint === constraint;
+}
+
+/** Transient concurrency aborts: safe for the client to retry the same request. */
+export function isTransientConflict(error: unknown): boolean {
+  return isPgError(error, PgErrorCode.deadlockDetected) || isPgError(error, PgErrorCode.serializationFailure);
 }
 
 /** Connection-level failures: the database is unreachable or went away mid-request. */
