@@ -46,6 +46,7 @@ export async function createTestApp(options: { env?: Record<string, string>; now
 }
 
 const TABLES = [
+  "admin_audit_log",
   "outbox_jobs",
   "payment_webhook_events",
   "refunds",
