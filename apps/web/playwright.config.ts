@@ -22,12 +22,14 @@ export default defineConfig({
   webServer: [
     {
       // A disposable database per run, so journeys never touch development data.
-      command: "node --env-file=.env src/scripts/reset-db.ts && node --env-file=.env src/main.ts",
+      // `.env` is optional so the same command works in CI, where settings come from `env` below.
+      command: "node --env-file-if-exists=.env src/scripts/reset-db.ts && node --env-file-if-exists=.env src/main.ts",
       cwd: "../api",
       url: "http://localhost:4000/health/ready",
       reuseExistingServer: false,
       env: {
         DATABASE_URL: "postgres://postgres:postgres@localhost:5433/carrental_e2e",
+        PAYMENT_WEBHOOK_SECRET: process.env.PAYMENT_WEBHOOK_SECRET ?? "e2e-webhook-secret-0123456789",
         // Many sign-ups from one IP would trip the registration limit during a run.
         RATE_LIMIT_ENABLED: "false",
         LOG_LEVEL: "warn",
