@@ -1,4 +1,5 @@
 import type { FastifyBaseLogger } from "fastify";
+import nodemailer from "nodemailer";
 import type { Outbox } from "../../../shared/outbox/outbox.ts";
 import type { EmailMessage, EmailQueue } from "../application/email.ts";
 import { renderEmail, type RenderedEmail } from "../application/templates.ts";
@@ -25,6 +26,19 @@ export function createLogEmailSender(logger: FastifyBaseLogger, includeBody: boo
       sent.push(email);
       if (sent.length > 100) sent.shift();
       logger.info({ to: email.to, subject: email.subject, ...(includeBody && { body: email.text }) }, "Email sent");
+    },
+  };
+}
+
+/**
+ * Sends through any SMTP service (Resend, SendGrid, Amazon SES, Postmark, Mailgun all offer SMTP).
+ * Failures throw, so the outbox retries with backoff.
+ */
+export function createSmtpEmailSender(smtpUrl: string, from: string): EmailSender {
+  const transport = nodemailer.createTransport(smtpUrl);
+  return {
+    async send(email) {
+      await transport.sendMail({ from, to: email.to, subject: email.subject, text: email.text, html: email.html });
     },
   };
 }

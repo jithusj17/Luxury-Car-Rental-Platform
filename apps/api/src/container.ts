@@ -20,6 +20,7 @@ import { createUserRepository } from "./modules/identity/infrastructure/user-rep
 import {
   createLogEmailSender,
   createOutboxEmailQueue,
+  createSmtpEmailSender,
   registerEmailDelivery,
   type EmailSender,
 } from "./modules/notifications/infrastructure/email-delivery.ts";
@@ -47,7 +48,11 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
     : undefined;
   redis?.on("error", (error) => logger.warn({ err: error }, "Redis error"));
 
-  const emailSender = overrides.emailSender ?? createLogEmailSender(logger, env.NODE_ENV !== "production");
+  const emailSender =
+    overrides.emailSender ??
+    (env.EMAIL_TRANSPORT === "smtp" && env.SMTP_URL
+      ? createSmtpEmailSender(env.SMTP_URL, env.EMAIL_FROM)
+      : createLogEmailSender(logger, env.NODE_ENV !== "production"));
   registerEmailDelivery(outbox, emailSender);
   const emails = createOutboxEmailQueue(outbox);
   const webUrl = env.WEB_ORIGINS[0] ?? "http://localhost:3000";

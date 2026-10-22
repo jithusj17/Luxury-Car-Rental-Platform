@@ -32,6 +32,12 @@ const envSchema = z
     /** Base URL the payment provider uses to reach our webhooks. */
     PUBLIC_API_URL: z.url().default("http://localhost:4000"),
 
+    /** `log` writes emails to the log (development); `smtp` sends them. */
+    EMAIL_TRANSPORT: z.enum(["log", "smtp"]).default("log"),
+    /** e.g. smtps://user:pass@smtp.example.com:465 (Resend, SendGrid, SES and most providers offer SMTP). */
+    SMTP_URL: z.url().optional(),
+    EMAIL_FROM: z.string().min(3).default("Car Rental <no-reply@carrental.local>"),
+
     JOBS_ENABLED: bool.default(true),
     RATE_LIMIT_ENABLED: bool.default(true),
     API_DOCS_ENABLED: bool.optional(),
@@ -39,7 +45,13 @@ const envSchema = z
     METRICS_TOKEN: z.string().min(16).optional(),
   })
   .superRefine((env, ctx) => {
+    if (env.EMAIL_TRANSPORT === "smtp" && !env.SMTP_URL) {
+      ctx.addIssue({ code: "custom", path: ["SMTP_URL"], message: "Required when EMAIL_TRANSPORT=smtp" });
+    }
     if (env.NODE_ENV !== "production") return;
+    if (env.EMAIL_TRANSPORT !== "smtp") {
+      ctx.addIssue({ code: "custom", path: ["EMAIL_TRANSPORT"], message: "Production must send real email (smtp)" });
+    }
     if (env.PAYMENT_PROVIDER === "mock") {
       ctx.addIssue({ code: "custom", path: ["PAYMENT_PROVIDER"], message: "The mock payment provider cannot run in production" });
     }
