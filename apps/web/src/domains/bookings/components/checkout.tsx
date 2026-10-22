@@ -2,8 +2,9 @@
 
 import { CircleCheck } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { PaymentForm } from "@/domains/payments/components/payment-form";
+import { PaymentStep } from "@/domains/payments/components/payment-step";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { ErrorState, LoadingSpinner, Skeleton } from "@/shared/components/ui/feedback";
@@ -15,7 +16,9 @@ import { HoldCountdown } from "./hold-countdown";
 
 /** Checkout: review the held booking, pay, then wait for the provider's confirmation. */
 export function Checkout({ bookingId }: { bookingId: string }) {
-  const [submitted, setSubmitted] = useState(false);
+  // Returning from a redirect-based payment step (e.g. 3-D Secure): wait for the webhook confirmation.
+  const returnedFromProvider = useSearchParams().get("redirect_status") === "succeeded";
+  const [submitted, setSubmitted] = useState(returnedFromProvider);
   const booking = useBookingDetail(bookingId, { pollWhilePending: submitted });
 
   if (booking.isPending) return <Skeleton className="h-96 rounded-xl" />;
@@ -75,7 +78,7 @@ export function Checkout({ bookingId }: { bookingId: string }) {
               <p>Payment received — confirming your booking…</p>
             </div>
           ) : (
-            <PaymentForm bookingId={b.id} amountLabel={formatPrice(b.price.totalCents, b.price.currency)} onSubmitted={() => setSubmitted(true)} />
+            <PaymentStep bookingId={b.id} amountLabel={formatPrice(b.price.totalCents, b.price.currency)} onSubmitted={() => setSubmitted(true)} />
           )}
         </Card>
       </div>
