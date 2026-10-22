@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import cookie from "@fastify/cookie";
+import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
@@ -59,6 +61,21 @@ export async function buildApp(env: Env, options: AppOptions = {}) {
   app.addHook("onClose", () => container.close());
 
   await app.register(cookie);
+  await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 5, parts: 6 } });
+  if (container.localStorage) {
+    // Development storage: serve uploads read-only, never as anything but the stored image type.
+    await app.register(fastifyStatic, {
+      root: container.localStorage.rootDir,
+      prefix: "/uploads/",
+      index: false,
+      list: false,
+      setHeaders: (res) => {
+        res.header("cache-control", "public, max-age=31536000, immutable");
+        res.header("content-security-policy", "default-src 'none'");
+        res.header("x-content-type-options", "nosniff");
+      },
+    });
+  }
   await registerSecurity(app, env.WEB_ORIGINS);
   const limit = createRateLimiter({
     enabled: env.RATE_LIMIT_ENABLED,

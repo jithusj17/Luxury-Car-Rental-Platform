@@ -3,6 +3,7 @@ import { Redis } from "ioredis";
 import { systemClock, type Clock } from "./shared/clock.ts";
 import type { Env } from "./shared/config/env.ts";
 import { createDatabase } from "./shared/db/client.ts";
+import { createLocalStorage, createS3Storage } from "./shared/storage/object-storage.ts";
 import { TransactionManager } from "./shared/db/transaction.ts";
 import { Scheduler } from "./shared/jobs/scheduler.ts";
 import { createMetrics } from "./shared/observability/metrics.ts";
@@ -72,9 +73,23 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
   };
 
   // Vehicles
+  const storagePublicUrl = env.STORAGE_PUBLIC_URL ?? `${env.PUBLIC_API_URL}/uploads`;
+  const localStorage = env.STORAGE_DRIVER === "local" ? createLocalStorage(env.LOCAL_STORAGE_DIR, storagePublicUrl) : undefined;
+  const photoStorage =
+    localStorage ??
+    createS3Storage({
+      bucket: env.S3_BUCKET!,
+      region: env.S3_REGION,
+      endpoint: env.S3_ENDPOINT,
+      accessKeyId: env.S3_ACCESS_KEY_ID!,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY!,
+      forcePathStyle: env.S3_FORCE_PATH_STYLE,
+      publicBaseUrl: storagePublicUrl,
+    });
   const vehicleRepository = createVehicleRepository(tx);
   const calendar = createCalendarRepository(tx);
   const vehicles: VehicleDeps = {
+    photos: photoStorage,
     vehicles: vehicleRepository,
     owners: users,
     reservations: { vehicleIdsReservedDuring: (period) => calendar.vehicleIdsBlockedDuring(period, clock.now()) },
@@ -159,6 +174,8 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
     outbox,
     scheduler,
     emailSender,
+    /** Set when photos are stored on local disk (served by the API under /uploads). */
+    localStorage,
     deps: { identity, vehicles, bookings, payments, admin },
     async close() {
       await scheduler.stop();

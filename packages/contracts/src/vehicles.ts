@@ -143,4 +143,8 @@ export const availabilityResponse = z.object({
 });
 export type AvailabilityResponse = z.infer<typeof availabilityResponse>;
 
+export const removePhotoQuery = z.object({ url: z.url().max(500) });
+export const reorderPhotosBody = z.object({ imageUrls: z.array(z.url().max(500)).max(10) });
+export type ReorderPhotosBody = z.infer<typeof reorderPhotosBody>;
+
 export const slugParams = z.object({ slug: z.string().min(1).max(160) });

@@ -38,6 +38,19 @@ const envSchema = z
     SMTP_URL: z.url().optional(),
     EMAIL_FROM: z.string().min(3).default("Car Rental <no-reply@carrental.local>"),
 
+    /** Vehicle photos: `local` disk (development) or any S3-compatible bucket (production). */
+    STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+    LOCAL_STORAGE_DIR: z.string().default("./uploads"),
+    /** Public base URL of stored files; defaults to the API's /uploads route for local storage. */
+    STORAGE_PUBLIC_URL: z.url().optional(),
+    S3_BUCKET: z.string().optional(),
+    S3_REGION: z.string().default("auto"),
+    /** Set for non-AWS providers, e.g. Cloudflare R2 or MinIO. */
+    S3_ENDPOINT: z.url().optional(),
+    S3_ACCESS_KEY_ID: z.string().optional(),
+    S3_SECRET_ACCESS_KEY: z.string().optional(),
+    S3_FORCE_PATH_STYLE: bool.default(false),
+
     JOBS_ENABLED: bool.default(true),
     RATE_LIMIT_ENABLED: bool.default(true),
     API_DOCS_ENABLED: bool.optional(),
@@ -48,7 +61,15 @@ const envSchema = z
     if (env.EMAIL_TRANSPORT === "smtp" && !env.SMTP_URL) {
       ctx.addIssue({ code: "custom", path: ["SMTP_URL"], message: "Required when EMAIL_TRANSPORT=smtp" });
     }
+    if (env.STORAGE_DRIVER === "s3") {
+      for (const key of ["S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "STORAGE_PUBLIC_URL"] as const) {
+        if (!env[key]) ctx.addIssue({ code: "custom", path: [key], message: "Required when STORAGE_DRIVER=s3" });
+      }
+    }
     if (env.NODE_ENV !== "production") return;
+    if (env.STORAGE_DRIVER !== "s3") {
+      ctx.addIssue({ code: "custom", path: ["STORAGE_DRIVER"], message: "Production needs shared storage (s3); local disk isn't shared between instances" });
+    }
     if (env.EMAIL_TRANSPORT !== "smtp") {
       ctx.addIssue({ code: "custom", path: ["EMAIL_TRANSPORT"], message: "Production must send real email (smtp)" });
     }

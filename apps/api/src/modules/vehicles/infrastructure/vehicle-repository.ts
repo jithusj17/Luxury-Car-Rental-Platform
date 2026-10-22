@@ -91,6 +91,31 @@ export function createVehicleRepository(tx: TransactionManager): VehicleReposito
       return { items: rows.map(toVehicle), total: totals[0]?.total ?? 0 };
     },
 
+    async appendImageIfRoom(id, url, max) {
+      const [row] = await db()
+        .update(vehicles)
+        .set({ imageUrls: sql`array_append(${vehicles.imageUrls}, ${url})`, updatedAt: sql`now()` })
+        .where(and(eq(vehicles.id, id), sql`cardinality(${vehicles.imageUrls}) < ${max}`))
+        .returning();
+      return row ? toVehicle(row) : null;
+    },
+
+    async removeImage(id, url) {
+      const [row] = await db()
+        .update(vehicles)
+        .set({ imageUrls: sql`array_remove(${vehicles.imageUrls}, ${url})`, updatedAt: sql`now()` })
+        .where(eq(vehicles.id, id))
+        .returning();
+      if (!row) throw new Error(`Vehicle ${id} vanished`);
+      return toVehicle(row);
+    },
+
+    async setImages(id, urls) {
+      const [row] = await db().update(vehicles).set({ imageUrls: urls, updatedAt: sql`now()` }).where(eq(vehicles.id, id)).returning();
+      if (!row) throw new Error(`Vehicle ${id} vanished`);
+      return toVehicle(row);
+    },
+
     async listForAdmin({ q, status }, { page, pageSize }) {
       const where = and(
         q ? sql`(${vehicles.make} || ' ' || ${vehicles.model} || ' ' || ${vehicles.city}) ilike ${likeLiteral(q)}` : undefined,

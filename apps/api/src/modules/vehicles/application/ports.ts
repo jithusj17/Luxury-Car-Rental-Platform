@@ -31,6 +31,11 @@ export interface VehicleRepository {
   updateIfVersion(id: string, expectedVersion: number, patch: VehiclePatch): Promise<Vehicle | null>;
   search(filters: VehicleSearchFilters, page: Page): Promise<PageResult<Vehicle>>;
   listByOwner(ownerId: string, page: Page, status?: VehicleStatus): Promise<PageResult<Vehicle>>;
+  // Photos (no version bump: photo changes don't conflict with detail edits)
+  /** Appends only while the vehicle has fewer than `max` photos; null otherwise. */
+  appendImageIfRoom(id: string, url: string, max: number): Promise<Vehicle | null>;
+  removeImage(id: string, url: string): Promise<Vehicle>;
+  setImages(id: string, urls: string[]): Promise<Vehicle>;
   // Admin area
   listForAdmin(filter: { q?: string; status?: VehicleStatus }, page: Page): Promise<PageResult<Vehicle>>;
   countSummary(): Promise<{ total: number; listed: number }>;
@@ -46,7 +51,16 @@ export interface ReservationLookup {
   vehicleIdsReservedDuring(period: { start: string; end: string }): Promise<string[]>;
 }
 
+/** Object storage for photos (local disk in development, S3-compatible in production). */
+export interface PhotoStorage {
+  put(key: string, body: Buffer, contentType: string): Promise<void>;
+  delete(key: string): Promise<void>;
+  publicUrl(key: string): string;
+  keyFromUrl(url: string): string | null;
+}
+
 export type VehicleDeps = {
+  photos: PhotoStorage;
   vehicles: VehicleRepository;
   owners: OwnerDirectory;
   reservations: ReservationLookup;
