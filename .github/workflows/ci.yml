@@ -35,11 +35,16 @@ jobs:
         ports:
           - 1025:1025
           - 8025:8025
+      stripe-mock:
+        image: stripe/stripe-mock:v0.197.0
+        ports:
+          - 12111:12111
 
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       # The e2e stack serves uploaded photos from localhost (no .env files in CI).
       IMAGES_ALLOW_LOCAL_IP: "true"
+      TEST_STRIPE_API_BASE: http://localhost:12111
 
     steps:
       - uses: actions/checkout@v4

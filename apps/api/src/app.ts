@@ -103,7 +103,7 @@ export async function buildApp(env: Env, options: AppOptions = {}) {
       tx: container.tx,
       outbox: container.outbox,
       clock: container.clock,
-      webhookSecret: env.PAYMENT_WEBHOOK_SECRET,
+      webhookSecret: env.PAYMENT_WEBHOOK_SECRET!,
       deliver: options.webhookDelivery ?? httpWebhookDelivery(`${env.PUBLIC_API_URL}/v1/payments/webhooks/mock`),
     });
   }

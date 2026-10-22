@@ -69,15 +69,17 @@ export async function handleWebhook(
   rawBody: string,
   headers: Record<string, string | string[] | undefined>,
 ): Promise<boolean> {
-  let event: ProviderEvent;
+  let event: ProviderEvent | null;
   try {
     event = deps.provider.verifyWebhook(rawBody, headers);
   } catch {
     throw errors.validation("Invalid webhook signature");
   }
+  if (!event) return false; // authentic but irrelevant event type
+  const verified = event;
   return deps.tx.run(async () => {
-    if (!(await deps.inbox.recordIfNew(deps.provider.name, event))) return false;
-    await applyProviderStatus(deps, event.providerPaymentId, statusByEvent[event.type], event.failureReason);
+    if (!(await deps.inbox.recordIfNew(deps.provider.name, verified))) return false;
+    await applyProviderStatus(deps, verified.providerPaymentId, statusByEvent[verified.type], verified.failureReason);
     return true;
   });
 }

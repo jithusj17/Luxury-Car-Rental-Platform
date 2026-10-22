@@ -42,5 +42,13 @@ services:
       - "8333:8333"
     profiles: ["s3"]
 
+  # Stripe's official API simulator for testing the Stripe adapter (port 12111).
+  # Started on demand: docker compose --profile stripe up -d stripe-mock
+  stripe-mock:
+    image: stripe/stripe-mock:v0.197.0
+    ports:
+      - "12111:12111"
+    profiles: ["stripe"]
+
 volumes:
   pgdata:

@@ -27,8 +27,14 @@ const envSchema = z
     SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
 
     BOOKING_HOLD_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
-    PAYMENT_PROVIDER: z.enum(["mock"]).default("mock"),
-    PAYMENT_WEBHOOK_SECRET: z.string().min(16),
+    PAYMENT_PROVIDER: z.enum(["mock", "stripe"]).default("mock"),
+    /** Signing secret of the built-in mock provider (development/test). */
+    PAYMENT_WEBHOOK_SECRET: z.string().min(16).optional(),
+    /** Stripe secret key (sk_live_… / sk_test_…) and webhook signing secret (whsec_…). */
+    STRIPE_SECRET_KEY: z.string().min(10).optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().min(10).optional(),
+    /** Only for tests against stripe-mock, e.g. http://localhost:12111. */
+    STRIPE_API_BASE: z.url().optional(),
     /** Base URL the payment provider uses to reach our webhooks. */
     PUBLIC_API_URL: z.url().default("http://localhost:4000"),
 
@@ -60,6 +66,14 @@ const envSchema = z
   .superRefine((env, ctx) => {
     if (env.EMAIL_TRANSPORT === "smtp" && !env.SMTP_URL) {
       ctx.addIssue({ code: "custom", path: ["SMTP_URL"], message: "Required when EMAIL_TRANSPORT=smtp" });
+    }
+    if (env.PAYMENT_PROVIDER === "mock" && !env.PAYMENT_WEBHOOK_SECRET) {
+      ctx.addIssue({ code: "custom", path: ["PAYMENT_WEBHOOK_SECRET"], message: "Required for the mock payment provider" });
+    }
+    if (env.PAYMENT_PROVIDER === "stripe") {
+      for (const key of ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"] as const) {
+        if (!env[key]) ctx.addIssue({ code: "custom", path: [key], message: "Required when PAYMENT_PROVIDER=stripe" });
+      }
     }
     if (env.STORAGE_DRIVER === "s3") {
       for (const key of ["S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "STORAGE_PUBLIC_URL"] as const) {

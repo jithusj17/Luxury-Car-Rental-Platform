@@ -30,6 +30,7 @@ import type { PaymentDeps } from "./modules/payments/application/ports.ts";
 import { registerPaymentJobs } from "./modules/payments/infrastructure/jobs.ts";
 import { createMockPaymentProvider } from "./modules/payments/infrastructure/mock-provider/mock-payment-provider.ts";
 import { createPaymentRepository, createWebhookInbox } from "./modules/payments/infrastructure/payment-repository.ts";
+import { createStripePaymentProvider } from "./modules/payments/infrastructure/stripe/stripe-payment-provider.ts";
 import type { VehicleDeps } from "./modules/vehicles/application/ports.ts";
 import { createVehicleRepository } from "./modules/vehicles/infrastructure/vehicle-repository.ts";
 import { createVehicleCatalog } from "./modules/vehicles/public-api.ts";
@@ -126,7 +127,10 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
   const payments: PaymentDeps = {
     payments: paymentRepository,
     inbox: createWebhookInbox(tx),
-    provider: createMockPaymentProvider(tx, clock, env.PAYMENT_WEBHOOK_SECRET),
+    provider:
+      env.PAYMENT_PROVIDER === "stripe"
+        ? createStripePaymentProvider({ secretKey: env.STRIPE_SECRET_KEY!, webhookSecret: env.STRIPE_WEBHOOK_SECRET!, apiBase: env.STRIPE_API_BASE })
+        : createMockPaymentProvider(tx, clock, env.PAYMENT_WEBHOOK_SECRET!),
     bookings: {
       getForPayment: async (id) => {
         const b = await bookingRepository.findById(id);

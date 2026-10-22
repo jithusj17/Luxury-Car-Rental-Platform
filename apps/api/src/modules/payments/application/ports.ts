@@ -24,8 +24,11 @@ export interface PaymentProvider {
   retrievePayment(providerPaymentId: string): Promise<{ status: ProviderPaymentStatus; failureReason?: string }>;
   cancelPayment(providerPaymentId: string): Promise<{ status: ProviderPaymentStatus }>;
   refund(input: { providerPaymentId: string; amountCents: number; idempotencyKey: string }): Promise<{ providerRefundId: string }>;
-  /** Verifies the signature and parses the event; throws on an invalid or stale signature. */
-  verifyWebhook(rawBody: string, headers: Record<string, string | string[] | undefined>): ProviderEvent;
+  /**
+   * Verifies the signature and parses the event; throws on an invalid or stale signature.
+   * Returns null for verified events this app doesn't act on.
+   */
+  verifyWebhook(rawBody: string, headers: Record<string, string | string[] | undefined>): ProviderEvent | null;
 }
 
 export type NewRefund = { id: string; paymentId: string; amountCents: number; reason: string; idempotencyKey: string };
