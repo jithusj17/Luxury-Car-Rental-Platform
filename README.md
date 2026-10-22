@@ -80,12 +80,11 @@ The code lives in a pnpm monorepo:
 ├── packages/
 │   └── contracts/               # Zod schemas shared by web and api
 ├── .github/workflows/ci.yml     # CI: typecheck, lint, tests, build, end-to-end tests
-├── docs/                        # Architecture, operations, known gaps
+├── docs/                        # Architecture, deployment, operations, engineering guidelines
 ├── deploy/                      # Production: docker-compose.prod.yml, Caddyfile, env example, smoke test
 ├── docker-compose.yml           # Local services: PostgreSQL, Redis, Mailpit (+ optional S3 and stripe-mock)
 ├── package.json                 # Workspace scripts (run from the repository root)
-├── pnpm-workspace.yaml
-└── CLAUDE.md                    # Engineering guidelines for the project
+└── pnpm-workspace.yaml
 ```
 
 ### Where to find things
@@ -203,5 +202,6 @@ See [docs/deployment.md](docs/deployment.md): Docker images for the API and web 
 - [`docs/architecture.md`](docs/architecture.md) — modules, how double bookings are prevented, payments flow, security
 - [`docs/deployment.md`](docs/deployment.md) — accounts you need, configuration, start, update, backups
 - [`docs/operations.md`](docs/operations.md) — configuration, health checks, metrics, alerts, runbooks
+- [`docs/engineering-guidelines.md`](docs/engineering-guidelines.md) — engineering principles and project decisions
 - [`docs/known-gaps.md`](docs/known-gaps.md) — what isn't built yet
 - [`apps/web/README.md`](apps/web/README.md) and [`apps/api/README.md`](apps/api/README.md) — app-specific notes

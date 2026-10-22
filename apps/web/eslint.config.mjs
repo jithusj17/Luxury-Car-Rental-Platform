@@ -3,7 +3,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
 /*
- * Module boundaries (see CLAUDE.md §5):
+ * Module boundaries (see docs/engineering-guidelines.md §5):
  *   app/     → thin routes; may import anything below
  *   shell/   → layouts & navigation; may import domains + shared
  *   domains/ → business features; may import shared and other domains, never shell or app

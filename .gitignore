@@ -11,3 +11,4 @@ playwright-report/
 test-results/
 !.env.production.example
 !deploy/.env.smoke
+CLAUDE.md

@@ -1,4 +1,4 @@
-# CLAUDE.md — Production-Ready Car Rental Application
+# Engineering Guidelines — Production-Ready Car Rental Application
 
 ## 0. Current Project Decisions (2026-10-22)
 
