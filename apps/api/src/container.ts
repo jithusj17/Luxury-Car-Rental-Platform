@@ -7,6 +7,8 @@ import { TransactionManager } from "./shared/db/transaction.ts";
 import { Scheduler } from "./shared/jobs/scheduler.ts";
 import { createMetrics } from "./shared/observability/metrics.ts";
 import { Outbox } from "./shared/outbox/outbox.ts";
+import type { AdminDeps } from "./modules/admin/application/ports.ts";
+import { createAuditLog } from "./modules/admin/infrastructure/audit-log.ts";
 import { confirmPaidBooking, expireLapsedHolds } from "./modules/bookings/application/booking-lifecycle.ts";
 import type { BookingDeps, PaymentCoordinator } from "./modules/bookings/application/ports.ts";
 import { createBookingRepository } from "./modules/bookings/infrastructure/booking-repository.ts";
@@ -100,8 +102,9 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
     config: { holdMinutes: env.BOOKING_HOLD_MINUTES, webUrl },
   };
 
+  const paymentRepository = createPaymentRepository(tx);
   const payments: PaymentDeps = {
-    payments: createPaymentRepository(tx),
+    payments: paymentRepository,
     inbox: createWebhookInbox(tx),
     provider: createMockPaymentProvider(tx, clock, env.PAYMENT_WEBHOOK_SECRET),
     bookings: {
@@ -117,6 +120,17 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
     metrics,
   };
   paymentCoordinator = createPaymentCoordinator(payments);
+
+  const admin: AdminDeps = {
+    users,
+    sessions,
+    payments: paymentRepository,
+    vehicles,
+    bookings,
+    audit: createAuditLog(tx),
+    tx,
+    clock,
+  };
   registerPaymentJobs(outbox, payments);
 
   outbox.onPermanentFailure((job, error) => {
@@ -140,7 +154,7 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
     outbox,
     scheduler,
     emailSender,
-    deps: { identity, vehicles, bookings, payments },
+    deps: { identity, vehicles, bookings, payments, admin },
     async close() {
       await scheduler.stop();
       redis?.disconnect();

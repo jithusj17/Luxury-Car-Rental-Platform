@@ -2,6 +2,7 @@
  * Development seed: two demo accounts and a set of listed vehicles. Refuses to run in production.
  *   owner@example.com / password1234   (owner + renter)
  *   renter@example.com / password1234  (renter)
+ *   admin@example.com / password1234   (admin)
  */
 import type { CreateVehicleBody } from "@car-rental/contracts";
 import { createVehicle } from "../modules/vehicles/application/owner-vehicle-use-cases.ts";
@@ -43,6 +44,8 @@ const fleet: Omit<CreateVehicleBody, keyof typeof base>[] = [
 try {
   const owner = await becomeOwner(identity, (await account("owner@example.com", "Olivia Owner")).id);
   await account("renter@example.com", "Rui Renter");
+  const admin = await account("admin@example.com", "Ada Admin");
+  await identity.users.setRoles(admin.id, ["renter", "admin"]);
   const existing = await vehicles.vehicles.listByOwner(owner.id, { page: 1, pageSize: 1 });
   if (existing.total === 0) {
     for (const vehicle of fleet) {
@@ -54,7 +57,7 @@ try {
       });
     }
   }
-  console.log(`Seeded: owner@example.com / renter@example.com (password1234), ${fleet.length} vehicles`);
+  console.log(`Seeded: owner@ / renter@ / admin@example.com (password1234), ${fleet.length} vehicles`);
 } finally {
   await container.close();
 }

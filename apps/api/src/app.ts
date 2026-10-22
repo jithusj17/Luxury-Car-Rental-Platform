@@ -5,6 +5,7 @@ import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { createContainer, type ContainerOverrides } from "./container.ts";
+import { adminRoutes } from "./modules/admin/presentation/routes.ts";
 import { ownerBookingRoutes } from "./modules/bookings/presentation/owner-routes.ts";
 import { bookingRoutes } from "./modules/bookings/presentation/routes.ts";
 import { registerAuthentication } from "./modules/identity/presentation/auth-guard.ts";
@@ -79,6 +80,7 @@ export async function buildApp(env: Env, options: AppOptions = {}) {
   bookingRoutes(app, deps.bookings, limit);
   ownerBookingRoutes(app, deps.bookings);
   paymentRoutes(app, deps.payments, limit);
+  adminRoutes(app, deps.admin);
   if (env.PAYMENT_PROVIDER === "mock") {
     registerMockCheckout(app, {
       tx: container.tx,
