@@ -16,7 +16,9 @@ import { createBookingRepository } from "./modules/bookings/infrastructure/booki
 import { createCalendarRepository } from "./modules/bookings/infrastructure/calendar-repository.ts";
 import type { IdentityDeps, PasswordHasher } from "./modules/identity/application/ports.ts";
 import { createScryptHasher } from "./modules/identity/infrastructure/scrypt-password-hasher.ts";
-import { createPasswordResetRepository, createSessionRepository } from "./modules/identity/infrastructure/session-repository.ts";
+import { createOneTimeTokenRepository, createSessionRepository } from "./modules/identity/infrastructure/session-repository.ts";
+import { emailVerificationTokens, passwordResetTokens } from "./modules/identity/infrastructure/schema.ts";
+import { grantConfiguredAdmin } from "./modules/admin/application/configured-admins.ts";
 import { createUserRepository } from "./modules/identity/infrastructure/user-repository.ts";
 import {
   createLogEmailSender,
@@ -65,12 +67,17 @@ export function createContainer(env: Env, logger: FastifyBaseLogger, overrides: 
   const identity: IdentityDeps = {
     users,
     sessions,
-    resets: createPasswordResetRepository(tx),
+    resets: createOneTimeTokenRepository(tx, passwordResetTokens),
+    verifications: createOneTimeTokenRepository(tx, emailVerificationTokens),
     hasher: overrides.hasher ?? createScryptHasher(),
     emails,
     tx,
     clock,
     config: { sessionTtlDays: env.SESSION_TTL_DAYS, webUrl },
+    // Bound below, once the admin module exists.
+    onEmailVerified: async (user) => {
+      await grantConfiguredAdmin(admin, user, env.ADMIN_EMAILS);
+    },
   };
 
   // Vehicles

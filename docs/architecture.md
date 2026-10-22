@@ -73,6 +73,8 @@ The mock provider implements the same `PaymentProvider` port a real provider (e.
 ## Security model
 
 - Passwords: scrypt (N=2^14, r=8, p=5 — OWASP-equivalent to N=2^17/p=1 at ~16 MiB instead of 128 MiB per hash), per-user salt, constant-time compare, timing-equalised login for unknown emails.
+- Email verification: sign-up emails a single-use link (SHA-256 stored, 24-hour expiry); the link opens a page where the user clicks to confirm, so mail scanners that prefetch links can't verify an address.
+- Admins: `ADMIN_EMAILS` grants the admin role only to accounts with a verified email, at startup and at the moment a listed account verifies; each grant is written to the audit log. Sign-up never grants roles from the request body.
 - Sessions: 256-bit random token in an `httpOnly; SameSite=Lax; Secure` (production) cookie; only its SHA-256 is stored; sliding 14-day expiry; rotated on login; all sessions revoked on password reset, other sessions on password change.
 - CSRF: the browser reaches the API same-origin through the Next.js rewrite; every non-GET request must carry an allow-listed `Origin` (webhooks exempt, signature-verified).
 - Authorization is enforced in use cases: ownership checks return 404 to non-parties; owner endpoints require the `owner` role.

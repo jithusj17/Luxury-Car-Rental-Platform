@@ -24,8 +24,9 @@ const client = { ip: null, userAgent: "seed" };
 
 async function account(email: string, fullName: string) {
   const existing = await identity.users.findByEmailWithPassword(email);
-  if (existing) return existing;
-  return (await register(identity, { email, fullName, password: "password1234" }, client)).user;
+  const user = existing ?? (await register(identity, { email, fullName, password: "password1234" }, client)).user;
+  // Demo accounts skip the emailed verification link.
+  return (await identity.users.markEmailVerified(user.id, new Date())) ?? user;
 }
 
 const base = { doors: 4, color: null, description: "", features: [], currency: "USD" as const, address: "", minDays: 1, maxDays: 30, status: "ACTIVE" as const };

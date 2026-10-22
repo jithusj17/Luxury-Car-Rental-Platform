@@ -1,8 +1,12 @@
 import { buildApp } from "./app.ts";
+import { grantConfiguredAdmins } from "./modules/admin/application/configured-admins.ts";
 import { loadEnv } from "./shared/config/env.ts";
 
 const env = loadEnv();
 const { app, container } = await buildApp(env);
+
+const granted = await grantConfiguredAdmins(container.deps.admin, env.ADMIN_EMAILS);
+if (granted.length > 0) app.log.info({ granted }, "Granted admin access from ADMIN_EMAILS");
 
 if (env.NODE_ENV === "production" && !env.REDIS_URL) {
   app.log.warn("REDIS_URL is not set: rate limits are per-instance only. Set it when running more than one instance.");

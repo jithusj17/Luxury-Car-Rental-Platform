@@ -6,6 +6,7 @@ import {
   registerBody,
   resetPasswordBody,
   updateProfileBody,
+  verifyEmailBody,
   type CurrentUser,
 } from "@car-rental/contracts";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -13,12 +14,13 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { bodyEmail, hours, minutes, type RateLimiter } from "../../../shared/http/rate-limit.ts";
 import * as account from "../application/account-use-cases.ts";
+import * as verification from "../application/email-verification.ts";
 import type { IdentityDeps } from "../application/ports.ts";
 import * as sessions from "../application/session-use-cases.ts";
 import type { User } from "../domain/user.ts";
 import { clearSessionCookie, requireUser, setSessionCookie, type CookieSettings } from "./auth-guard.ts";
 
-const toDto = (user: User): CurrentUser => ({ ...user, createdAt: user.createdAt.toISOString() });
+const toDto = ({ emailVerifiedAt, ...user }: User): CurrentUser => ({ ...user, emailVerified: emailVerifiedAt !== null, createdAt: user.createdAt.toISOString() });
 const clientInfo = (request: FastifyRequest) => ({ ip: request.ip, userAgent: request.headers["user-agent"]?.slice(0, 300) ?? null });
 const userResponse = { 200: z.object({ user: currentUser }) };
 const tags = ["Auth"];
@@ -72,6 +74,19 @@ export function identityRoutes(app: FastifyInstance, deps: IdentityDeps, limit: 
     await account.resetPassword(deps, request.body);
     clearSessionCookie(reply, cookies);
     return reply.status(204).send(null);
+  });
+
+  r.post("/v1/auth/email/verify", {
+    schema: { tags, body: verifyEmailBody, response: userResponse },
+    preHandler: [limit("verify-email-ip", { max: 20, windowMs: hours(1) })],
+  }, async (request) => ({ user: toDto(await verification.verifyEmail(deps, request.body.token)) }));
+
+  r.post("/v1/me/email/verification", {
+    schema: { tags, response: { 202: z.null() } },
+    preHandler: [limit("verify-email-resend", { max: 3, windowMs: hours(1), key: (request) => request.auth?.user.id ?? request.ip })],
+  }, async (request, reply) => {
+    await verification.resendVerificationEmail(deps, requireUser(request).user.id);
+    return reply.status(202).send(null);
   });
 
   r.post("/v1/me/password", {

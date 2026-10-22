@@ -57,6 +57,7 @@ const TABLES = [
   "bookings",
   "vehicles",
   "password_reset_tokens",
+  "email_verification_tokens",
   "sessions",
   "users",
 ];

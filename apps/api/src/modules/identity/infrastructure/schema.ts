@@ -11,6 +11,8 @@ export const users = pgTable("users", {
   roles: text("roles").array().notNull().default(sql`'{renter}'::text[]`),
   /** Set by an admin; suspended accounts can't sign in and their sessions stop working. */
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  /** Set when the user opens the link emailed to them; proves they own the address. */
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -45,4 +47,20 @@ export const passwordResetTokens = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("password_reset_tokens_user_id_idx").on(t.userId)],
+);
+
+/** Same shape as password reset tokens: single use, stored as SHA-256, short-lived. */
+export const emailVerificationTokens = pgTable(
+  "email_verification_tokens",
+  {
+    id: uuid("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("email_verification_tokens_user_id_idx").on(t.userId)],
 );

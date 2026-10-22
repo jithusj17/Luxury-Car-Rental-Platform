@@ -34,7 +34,27 @@ function renderText(message: EmailMessage): Omit<RenderedEmail, "html"> {
   const { to } = message;
   switch (message.template) {
     case "welcome":
-      return { to, subject: "Welcome to Car Rental", text: `Hi ${message.data.name}, your account is ready.` };
+      return {
+        to,
+        subject: "Welcome to Car Rental: please confirm your email",
+        text: `Hi ${message.data.name}, your account is ready.
+
+Please confirm your email address within 24 hours:
+
+${message.data.verifyUrl}`,
+      };
+    case "verify-email":
+      return {
+        to,
+        subject: "Confirm your email",
+        text: `Hi ${message.data.name},
+
+Confirm your email address within 24 hours:
+
+${message.data.verifyUrl}
+
+If you didn't ask for this, ignore this email.`,
+      };
     case "password-reset":
       return {
         to,

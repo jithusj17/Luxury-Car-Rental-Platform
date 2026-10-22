@@ -1,8 +1,8 @@
 import type { UserRole } from "@car-rental/contracts";
 import { and, eq, gt, isNull, lt, ne } from "drizzle-orm";
 import type { TransactionManager } from "../../../shared/db/transaction.ts";
-import type { PasswordResetRepository, SessionRepository } from "../application/ports.ts";
-import { passwordResetTokens, sessions, users } from "./schema.ts";
+import type { OneTimeTokenRepository, SessionRepository } from "../application/ports.ts";
+import { emailVerificationTokens, passwordResetTokens, sessions, users } from "./schema.ts";
 
 export function createSessionRepository(tx: TransactionManager): SessionRepository {
   const db = () => tx.executor();
@@ -23,6 +23,7 @@ export function createSessionRepository(tx: TransactionManager): SessionReposito
             phone: users.phone,
             roles: users.roles,
             suspendedAt: users.suspendedAt,
+            emailVerifiedAt: users.emailVerifiedAt,
             createdAt: users.createdAt,
           },
         })
@@ -55,34 +56,33 @@ export function createSessionRepository(tx: TransactionManager): SessionReposito
   };
 }
 
-export function createPasswordResetRepository(tx: TransactionManager): PasswordResetRepository {
+/**
+ * Backs both single-use token tables (password reset, email verification); they have identical
+ * columns, so one implementation serves both.
+ */
+export function createOneTimeTokenRepository(tx: TransactionManager, table: typeof passwordResetTokens | typeof emailVerificationTokens): OneTimeTokenRepository {
   const db = () => tx.executor();
+  const t = table as typeof passwordResetTokens;
 
   return {
     async create(input) {
-      await db().insert(passwordResetTokens).values(input);
+      await db().insert(t).values(input);
     },
 
     async consume(tokenHash, now) {
       const [row] = await db()
-        .update(passwordResetTokens)
+        .update(t)
         .set({ usedAt: now })
-        .where(
-          and(
-            eq(passwordResetTokens.tokenHash, tokenHash),
-            isNull(passwordResetTokens.usedAt),
-            gt(passwordResetTokens.expiresAt, now),
-          ),
-        )
-        .returning({ userId: passwordResetTokens.userId });
+        .where(and(eq(t.tokenHash, tokenHash), isNull(t.usedAt), gt(t.expiresAt, now)))
+        .returning({ userId: t.userId });
       return row?.userId ?? null;
     },
 
     async invalidateForUser(userId, now) {
       await db()
-        .update(passwordResetTokens)
+        .update(t)
         .set({ usedAt: now })
-        .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
+        .where(and(eq(t.userId, userId), isNull(t.usedAt)));
     },
   };
 }

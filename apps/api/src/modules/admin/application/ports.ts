@@ -26,7 +26,7 @@ export interface AuditLog {
  * rules (cancellation refunds, vehicle status transitions) are never duplicated here.
  */
 export type AdminDeps = {
-  users: Pick<UserRepository, "findById" | "findNames" | "listForAdmin" | "countSummary" | "setRoles" | "setSuspended">;
+  users: Pick<UserRepository, "findById" | "findByEmailWithPassword" | "findNames" | "listForAdmin" | "countSummary" | "setRoles" | "setSuspended">;
   sessions: Pick<SessionRepository, "deleteAllForUser">;
   payments: Pick<PaymentRepository, "listForAdmin" | "refundedTotalCents">;
   vehicles: VehicleDeps;

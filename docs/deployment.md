@@ -46,12 +46,7 @@ Check it:
 curl -s https://<domain>/api/health/ready      # {"status":"ok","checks":{"database":"ok","redis":"ok"}}
 ```
 
-Create the first admin by registering normally, then on the server:
-
-```bash
-docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env exec postgres \
-  psql -U carrental -c "update users set roles = array['renter','admin'] where email = 'you@example.com'"
-```
+**Admins** come from the `ADMIN_EMAILS` setting in `deploy/.env` (comma-separated). Register with one of those emails and open the verification link that is emailed to you: the account becomes an admin at that moment, and the change is recorded in the audit log. Verification matters here: without it, anyone could register a listed address first. Existing admins can also grant or remove admin access from **Admin → Users**. Removing an email from `ADMIN_EMAILS` doesn't demote anyone; use the Users page for that.
 
 ## 4. Update to a new version
 

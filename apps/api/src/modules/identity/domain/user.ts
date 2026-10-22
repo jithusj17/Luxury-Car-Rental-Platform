@@ -7,6 +7,8 @@ export type User = {
   phone: string | null;
   roles: UserRole[];
   suspendedAt: Date | null;
+  /** Null until the user opens the verification link sent to their email. */
+  emailVerifiedAt: Date | null;
   createdAt: Date;
 };
 

@@ -20,6 +20,8 @@ export interface UserRepository {
   countSummary(): Promise<{ total: number; hosts: number; admins: number; suspended: number }>;
   setRoles(id: string, roles: UserRole[]): Promise<User | null>;
   setSuspended(id: string, suspendedAt: Date | null): Promise<User | null>;
+  /** Sets the verification time once; returns the user either way. */
+  markEmailVerified(id: string, at: Date): Promise<User | null>;
 }
 
 export type SessionRecord = { id: string; userId: string; expiresAt: Date };
@@ -33,7 +35,8 @@ export interface SessionRepository {
   deleteExpired(now: Date): Promise<number>;
 }
 
-export interface PasswordResetRepository {
+/** Single-use emailed tokens (password reset, email verification). */
+export interface OneTimeTokenRepository {
   create(input: { id: string; userId: string; tokenHash: string; expiresAt: Date }): Promise<void>;
   /** Atomically marks an unused, unexpired token as used; returns its user id. */
   consume(tokenHash: string, now: Date): Promise<string | null>;
@@ -48,10 +51,13 @@ export interface PasswordHasher {
 export type IdentityDeps = {
   users: UserRepository;
   sessions: SessionRepository;
-  resets: PasswordResetRepository;
+  resets: OneTimeTokenRepository;
+  verifications: OneTimeTokenRepository;
   hasher: PasswordHasher;
   emails: EmailQueue;
   tx: TransactionManager;
   clock: Clock;
   config: { sessionTtlDays: number; webUrl: string };
+  /** Called after an account proves it owns its email (the container grants configured admin access here). */
+  onEmailVerified?: (user: User) => Promise<void>;
 };

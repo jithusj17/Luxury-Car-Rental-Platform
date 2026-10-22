@@ -25,14 +25,14 @@ describe("SMTP delivery", () => {
   it("delivers a multipart (text + HTML) email", async () => {
     const to = `smtp-${randomUUID()}@example.com`;
     const sender = createSmtpEmailSender(MAILPIT_SMTP, "Car Rental <no-reply@carrental.local>");
-    await sender.send(renderEmail({ template: "welcome", to, data: { name: "Mia" } }));
+    await sender.send(renderEmail({ template: "welcome", to, data: { name: "Mia", verifyUrl: "http://localhost:3000/verify-email?token=abc" } }));
 
     type Search = { messages_count: number; messages: { ID: string }[] };
     type Message = { Subject: string; From: { Address: string }; Text: string; HTML: string };
     const search = (await fetch(`${MAILPIT_API}/search?query=${encodeURIComponent(`to:${to}`)}`).then((r) => r.json())) as Search;
     expect(search.messages_count).toBe(1);
     const message = (await fetch(`${MAILPIT_API}/message/${search.messages[0]!.ID}`).then((r) => r.json())) as Message;
-    expect(message.Subject).toBe("Welcome to Car Rental");
+    expect(message.Subject).toBe("Welcome to Car Rental: please confirm your email");
     expect(message.From.Address).toBe("no-reply@carrental.local");
     expect(message.Text).toContain("Hi Mia");
     expect(message.HTML).toContain("Welcome to Car Rental");

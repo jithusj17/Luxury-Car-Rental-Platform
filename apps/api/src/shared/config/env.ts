@@ -57,6 +57,16 @@ const envSchema = z
     S3_SECRET_ACCESS_KEY: z.string().optional(),
     S3_FORCE_PATH_STYLE: bool.default(false),
 
+    /**
+     * Comma-separated emails that get admin access once their account has a verified email.
+     * Applied at startup and when a listed account verifies. Only adds access; never removes it.
+     */
+    ADMIN_EMAILS: z
+      .string()
+      .default("")
+      .transform((v) => v.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean))
+      .pipe(z.array(z.email())),
+
     JOBS_ENABLED: bool.default(true),
     RATE_LIMIT_ENABLED: bool.default(true),
     API_DOCS_ENABLED: bool.optional(),

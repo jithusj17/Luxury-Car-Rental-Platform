@@ -57,6 +57,11 @@ export const currentUser = z.object({
   fullName: z.string(),
   phone: z.string().nullable(),
   roles: z.array(userRole),
+  /** True once the user has opened the link emailed to them. */
+  emailVerified: z.boolean(),
   createdAt: z.iso.datetime(),
 });
 export type CurrentUser = z.infer<typeof currentUser>;
+
+export const verifyEmailBody = z.object({ token: z.string().min(20).max(200) });
+export type VerifyEmailBody = z.infer<typeof verifyEmailBody>;

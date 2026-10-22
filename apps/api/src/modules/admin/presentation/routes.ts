@@ -31,7 +31,12 @@ import * as platform from "../application/platform-admin.ts";
 import type { AdminDeps } from "../application/ports.ts";
 import { listUsers, setUserSuspended, updateUserRoles } from "../application/user-admin.ts";
 
-const toUserDto = (u: User): AdminUser => ({ ...u, createdAt: u.createdAt.toISOString(), suspendedAt: u.suspendedAt?.toISOString() ?? null });
+const toUserDto = ({ emailVerifiedAt, ...u }: User): AdminUser => ({
+  ...u,
+  emailVerified: emailVerifiedAt !== null,
+  createdAt: u.createdAt.toISOString(),
+  suspendedAt: u.suspendedAt?.toISOString() ?? null,
+});
 const toPaymentDto = (p: Payment): AdminPayment => ({
   id: p.id,
   bookingId: p.bookingId,

@@ -13,10 +13,11 @@ const publicColumns = {
   phone: users.phone,
   roles: users.roles,
   suspendedAt: users.suspendedAt,
+  emailVerifiedAt: users.emailVerifiedAt,
   createdAt: users.createdAt,
 };
 
-type Row = { id: string; email: string; fullName: string; phone: string | null; roles: string[]; suspendedAt: Date | null; createdAt: Date };
+type Row = { id: string; email: string; fullName: string; phone: string | null; roles: string[]; suspendedAt: Date | null; emailVerifiedAt: Date | null; createdAt: Date };
 const toUser = (row: Row): User => ({ ...row, roles: row.roles as UserRole[] });
 
 export function createUserRepository(tx: TransactionManager): UserRepository {
@@ -111,6 +112,15 @@ export function createUserRepository(tx: TransactionManager): UserRepository {
 
     async setSuspended(id, suspendedAt) {
       const [row] = await db().update(users).set({ suspendedAt, updatedAt: sql`now()` }).where(eq(users.id, id)).returning(publicColumns);
+      return row ? toUser(row) : null;
+    },
+
+    async markEmailVerified(id, at) {
+      const [row] = await db()
+        .update(users)
+        .set({ emailVerifiedAt: sql`coalesce(${users.emailVerifiedAt}, ${at})`, updatedAt: sql`now()` })
+        .where(eq(users.id, id))
+        .returning(publicColumns);
       return row ? toUser(row) : null;
     },
 

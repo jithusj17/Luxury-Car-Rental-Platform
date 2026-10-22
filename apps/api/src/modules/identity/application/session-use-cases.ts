@@ -3,6 +3,7 @@ import type { LoginBody, RegisterBody } from "@car-rental/contracts";
 import { errors } from "../../../shared/errors/app-error.ts";
 import { generateToken, hashToken } from "../../../shared/security/tokens.ts";
 import { DEFAULT_ROLES, type User } from "../domain/user.ts";
+import { issueVerificationLink } from "./email-verification.ts";
 import type { IdentityDeps } from "./ports.ts";
 
 export type ClientInfo = { ip: string | null; userAgent: string | null };
@@ -32,7 +33,8 @@ export async function register(deps: IdentityDeps, input: RegisterBody, client: 
       roles: DEFAULT_ROLES,
     });
     if (!user) throw errors.conflict("An account with this email already exists");
-    await deps.emails.enqueue({ template: "welcome", to: user.email, data: { name: user.fullName } });
+    const verifyUrl = await issueVerificationLink(deps, user.id);
+    await deps.emails.enqueue({ template: "welcome", to: user.email, data: { name: user.fullName, verifyUrl } });
     return issueSession(deps, user, client);
   });
 }
