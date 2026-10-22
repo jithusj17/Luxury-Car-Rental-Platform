@@ -33,5 +33,14 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  # S3-compatible storage for testing the production photo driver (S3 API on :8333).
+  # Started on demand: docker compose --profile s3 up -d s3
+  s3:
+    image: chrislusf/seaweedfs:3.97
+    command: server -s3 -s3.port=8333 -dir=/data -volume.max=5
+    ports:
+      - "8333:8333"
+    profiles: ["s3"]
+
 volumes:
   pgdata:
