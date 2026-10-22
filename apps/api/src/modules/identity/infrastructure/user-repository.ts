@@ -12,10 +12,11 @@ const publicColumns = {
   fullName: users.fullName,
   phone: users.phone,
   roles: users.roles,
+  suspendedAt: users.suspendedAt,
   createdAt: users.createdAt,
 };
 
-type Row = { id: string; email: string; fullName: string; phone: string | null; roles: string[]; createdAt: Date };
+type Row = { id: string; email: string; fullName: string; phone: string | null; roles: string[]; suspendedAt: Date | null; createdAt: Date };
 const toUser = (row: Row): User => ({ ...row, roles: row.roles as UserRole[] });
 
 export function createUserRepository(tx: TransactionManager): UserRepository {
@@ -75,6 +76,42 @@ export function createUserRepository(tx: TransactionManager): UserRepository {
         .returning(publicColumns);
       if (!row) throw new Error(`User ${id} vanished during update`);
       return toUser(row);
+    },
+
+    async listForAdmin({ q, role }, { page, pageSize }) {
+      // Escape LIKE wildcards in user input.
+      const pattern = q ? `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : undefined;
+      const where = and(
+        pattern ? or(ilike(users.email, pattern), ilike(users.fullName, pattern)) : undefined,
+        role ? sql`${role} = any(${users.roles})` : undefined,
+      );
+      const [rows, totals] = await Promise.all([
+        db().select(publicColumns).from(users).where(where).orderBy(desc(users.createdAt), asc(users.id)).limit(pageSize).offset((page - 1) * pageSize),
+        db().select({ total: count() }).from(users).where(where),
+      ]);
+      return { items: rows.map(toUser), total: totals[0]?.total ?? 0 };
+    },
+
+    async countSummary() {
+      const [row] = await db()
+        .select({
+          total: count(),
+          hosts: count(sql`case when 'owner' = any(${users.roles}) then 1 end`),
+          admins: count(sql`case when 'admin' = any(${users.roles}) then 1 end`),
+          suspended: count(users.suspendedAt),
+        })
+        .from(users);
+      return row ?? { total: 0, hosts: 0, admins: 0, suspended: 0 };
+    },
+
+    async setRoles(id, roles) {
+      const [row] = await db().update(users).set({ roles, updatedAt: sql`now()` }).where(eq(users.id, id)).returning(publicColumns);
+      return row ? toUser(row) : null;
+    },
+
+    async setSuspended(id, suspendedAt) {
+      const [row] = await db().update(users).set({ suspendedAt, updatedAt: sql`now()` }).where(eq(users.id, id)).returning(publicColumns);
+      return row ? toUser(row) : null;
     },
 
     async findNames(ids) {

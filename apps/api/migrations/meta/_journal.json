@@ -15,6 +15,13 @@
       "when": 1792651163775,
       "tag": "0001_booking_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792658500794,
+      "tag": "0002_admin_area",
+      "breakpoints": true
     }
   ]
 }

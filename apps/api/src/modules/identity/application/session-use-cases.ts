@@ -42,6 +42,8 @@ export async function login(deps: IdentityDeps, input: LoginBody, client: Client
   dummyHash ??= deps.hasher.hash("timing-equalisation-password");
   const valid = await deps.hasher.verify(input.password, record?.passwordHash ?? (await dummyHash));
   if (!record || !valid) throw errors.unauthenticated("Invalid email or password");
+  // Checked after the password so suspension status isn't revealed to someone guessing.
+  if (record.suspendedAt) throw errors.forbidden("This account is suspended. Contact support.");
   const { passwordHash: _omit, ...user } = record;
   return issueSession(deps, user, client);
 }

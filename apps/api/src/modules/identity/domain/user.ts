@@ -6,6 +6,7 @@ export type User = {
   fullName: string;
   phone: string | null;
   roles: UserRole[];
+  suspendedAt: Date | null;
   createdAt: Date;
 };
 

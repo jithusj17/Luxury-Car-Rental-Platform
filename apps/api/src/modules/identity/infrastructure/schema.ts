@@ -9,6 +9,8 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   phone: text("phone"),
   roles: text("roles").array().notNull().default(sql`'{renter}'::text[]`),
+  /** Set by an admin; suspended accounts can't sign in and their sessions stop working. */
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -22,12 +22,14 @@ export function createSessionRepository(tx: TransactionManager): SessionReposito
             fullName: users.fullName,
             phone: users.phone,
             roles: users.roles,
+            suspendedAt: users.suspendedAt,
             createdAt: users.createdAt,
           },
         })
         .from(sessions)
         .innerJoin(users, eq(users.id, sessions.userId))
-        .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now)));
+        // A suspended account's sessions stop working immediately.
+        .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now), isNull(users.suspendedAt)));
       return row ? { session: row.session, user: { ...row.user, roles: row.user.roles as UserRole[] } } : null;
     },
 

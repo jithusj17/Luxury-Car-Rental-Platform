@@ -6,3 +6,4 @@ export * from "../../modules/bookings/infrastructure/schema.ts";
 export * from "../../modules/payments/infrastructure/schema.ts";
 export * from "../../modules/payments/infrastructure/mock-provider/schema.ts";
 export * from "../outbox/schema.ts";
+export * from "../../modules/admin/infrastructure/schema.ts";
