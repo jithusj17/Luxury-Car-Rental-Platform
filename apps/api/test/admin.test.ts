@@ -118,6 +118,12 @@ describe("bookings and payments", () => {
     expect(await auditActions()).toEqual(["booking.cancelled"]);
   });
 
+  it("can't bypass the audited admin endpoint through the regular cancel route", async () => {
+    const vehicle = await listVehicle(t.app, owner);
+    const hold = await api(t.app).post("/v1/bookings", bookingRequest(vehicle.id, "2030-02-01", "2030-02-03"), { session: renter, headers: idempotency() });
+    expect((await api(t.app).post(`/v1/bookings/${hold.body.id}/cancel`, {}, { session: admin })).status).toBe(404);
+  });
+
   it("requires a reason to cancel", async () => {
     const vehicle = await listVehicle(t.app, owner);
     const hold = await api(t.app).post("/v1/bookings", bookingRequest(vehicle.id, "2030-02-01", "2030-02-03"), { session: renter, headers: idempotency() });

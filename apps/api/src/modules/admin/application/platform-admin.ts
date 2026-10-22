@@ -55,7 +55,7 @@ export function listBookings(deps: AdminDeps, query: AdminBookingListQuery) {
 /** Admin cancellations follow the platform policy for admins: a full refund of anything paid. */
 export async function cancelBookingAsAdmin(deps: AdminDeps, admin: User, bookingId: string, reason: string) {
   return deps.tx.run(async () => {
-    const booking = await cancelBooking(deps.bookings, admin, bookingId, reason);
+    const booking = await cancelBooking(deps.bookings, admin, bookingId, reason, { asAdmin: true });
     await deps.audit.record({ actorId: admin.id, action: "booking.cancelled", targetType: "booking", targetId: bookingId, details: { reason } });
     return booking;
   });

@@ -13,13 +13,22 @@ export function actorFor(booking: Pick<Booking, "renterId" | "ownerId">, user: U
   return isAdmin(user) ? "admin" : null;
 }
 
-/** Cancels a booking under the cancellation policy, freeing the dates and queueing any refund atomically. */
-export async function cancelBooking(deps: BookingDeps, user: User, bookingId: string, reason?: string): Promise<Booking> {
+/**
+ * Cancels a booking under the cancellation policy, freeing the dates and queueing any refund atomically.
+ * Admins who aren't a party may only cancel through the admin area (`asAdmin`), which audits the action.
+ */
+export async function cancelBooking(
+  deps: BookingDeps,
+  user: User,
+  bookingId: string,
+  reason?: string,
+  options: { asAdmin?: boolean } = {},
+): Promise<Booking> {
   const now = deps.clock.now();
   const cancelled = await deps.tx.run(async () => {
     const booking = await deps.bookings.findByIdForUpdate(bookingId);
     const actor = booking && actorFor(booking, user);
-    if (!booking || !actor) throw errors.notFound("Booking");
+    if (!booking || !actor || (actor === "admin" && !options.asAdmin)) throw errors.notFound("Booking");
 
     const terms = cancellationTerms(booking, actor, now);
     if (!terms.allowed) throw errors.conflict("This booking can no longer be cancelled");
